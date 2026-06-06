@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    ports:
+      - "8000:8000"
+      - "8088:8088"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - fl-network
+
+  client_alpha:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    depends_on:
+      - server
+    command: python scripts/run_client.py --school school_alpha --server server:8088
+    volumes:
+      - ./data:/app/data
+    networks:
+      - fl-network
+
+  client_beta:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    depends_on:
+      - server
+    command: python scripts/run_client.py --school school_beta --server server:8088
+    volumes:
+      - ./data:/app/data
+    networks:
+      - fl-network
+
+  client_gamma:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    depends_on:
+      - server
+    command: python scripts/run_client.py --school school_gamma --server server:8088
+    volumes:
+      - ./data:/app/data
+    networks:
+      - fl-network
+
+networks:
+  fl-network:
+    driver: bridge

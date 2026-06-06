@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY . .
+
+# Expose FastAPI port and Flower port
+EXPOSE 8000
+EXPOSE 8088
+
+# Set PYTHONPATH
+ENV PYTHONPATH=/app
+
+# Start FastAPI server
+CMD ["python", "server/main.py"]

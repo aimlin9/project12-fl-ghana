@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-School Federated Learning Dashboard</title>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 25, 40, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1; /* Indigo */
+            --primary-hover: #4f46e5;
+            --success: #10b981; /* Emerald */
+            --warning: #f59e0b; /* Amber */
+            --danger: #ef4444; /* Rose */
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --glass-glow: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15), transparent 50%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: var(--glass-glow);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            background-color: rgba(11, 15, 25, 0.7);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2.2rem;
+            height: 2.2rem;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .logo-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, #d1d5db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-badge {
+            font-size: 0.75rem;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Dashboard grid layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Controls sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Forms styling */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            padding: 0.65rem 0.75rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+
+        .form-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .form-switch label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Switch widget */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+            width: 100%;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Status colors */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-idle {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .status-failed {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-offline {
+            background-color: rgba(156, 163, 175, 0.15);
+            color: var(--text-muted);
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        /* Pulse dot animation */
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .pulse-dot.success { background-color: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 1.5s infinite; }
+        .pulse-dot.primary { background-color: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulse 1.5s infinite; }
+        .pulse-dot.danger { background-color: var(--danger); }
+        .pulse-dot.muted { background-color: var(--text-muted); }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Right panel grid */
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Quick stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* Client nodes grid */
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .client-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .client-metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .client-metric-label {
+            color: var(--text-muted);
+        }
+
+        .client-metric-val {
+            font-weight: 500;
+        }
+
+        /* Charts area */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* Simulation Log banner */
+        .log-banner {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #a7f3d0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            height: 6px;
+            margin-top: 1rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            background: linear-gradient(to right, var(--primary), #a855f7);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">F</div>
+            <div>
+                <h1 class="logo-title">Federated Progress Analytics</h1>
+                <span style="font-size: 0.7rem; color: var(--text-muted)">Privacy-Preserving EdTech Prototype</span>
+            </div>
+            <span class="logo-badge">Prototype</span>
+        </div>
+        <div id="sim-status-banner" class="status-badge status-offline">
+            <span class="pulse-dot muted" id="status-pulse"></span>
+            <span id="status-text">OFFLINE</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-grid">
+            <!-- Sidebar with controls -->
+            <div class="sidebar">
+                <div class="card">
+                    <h3 class="card-title">FL Configuration</h3>
+                    
+                    <div class="form-group form-switch">
+                        <label for="use-paillier">Secure Aggregation (Paillier)</label>
+                        <label class="switch">
+                            <input type="checkbox" id="use-paillier" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group form-switch">
+                        <label for="use-dp">Differential Privacy (DP-SGD)</label>
+                        <label class="switch">
+                            <input type="checkbox" id="use-dp" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rounds-input">Total FL Rounds</label>
+                        <input type="number" id="rounds-input" class="form-control" value="8" min="1" max="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epochs-input">Local Epochs</label>
+                        <input type="number" id="epochs-input" class="form-control" value="3" min="1" max="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lr-input">Learning Rate</label>
+                        <input type="number" id="lr-input" class="form-control" value="0.01" step="0.001" min="0.0001" max="0.1">
+                    </div>
+
+                    <button id="start-btn" class="btn btn-primary">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-top:-2px">
+                            <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                        </svg>
+                        Start FL Simulation
+                    </button>
+                    
+                    <div class="progress-bar-container" id="sim-progress-container">
+                        <div class="progress-bar" id="sim-progress-bar"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Network Info</h3>
+                    <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display:flex; justify-content:space-between">
+                            <span style="color:var(--text-muted)">FastAPI Server:</span>
+                            <span>127.0.0.1:8000</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span style="color:var(--text-muted)">Flower Port:</span>
+                            <span>127.0.0.1:8088</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span style="color:var(--text-muted)">Client Nodes:</span>
+                            <span>3 Configured</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span style="color:var(--text-muted)">DPA Compliance:</span>
+                            <span style="color:var(--success); font-weight:600">PASSED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main dashboard panel -->
+            <div class="main-panel">
+                <!-- Telemetry Stats row -->
+                <div class="stats-row">
+                    <div class="card stat-card">
+                        <span class="stat-label">Model Performance (Macro F1)</span>
+                        <span class="stat-value" id="stat-f1">-</span>
+                    </div>
+                    <div class="card stat-card">
+                        <span class="stat-label">Validation Accuracy</span>
+                        <span class="stat-value" id="stat-accuracy">-</span>
+                    </div>
+                    <div class="card stat-card">
+                        <span class="stat-label">Comm. Overhead (Total)</span>
+                        <span class="stat-value" id="stat-comm">-</span>
+                    </div>
+                    <div class="card stat-card">
+                        <span class="stat-label">Privacy Cost (Max Epsilon)</span>
+                        <span class="stat-value" id="stat-epsilon">-</span>
+                    </div>
+                </div>
+
+                <!-- Live Client nodes status -->
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem">
+                        <span>School Server Nodes</span>
+                        <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted)">(Simulate connectivity dropouts by toggling status)</span>
+                    </h3>
+                    <div class="clients-grid">
+                        <!-- School Alpha -->
+                        <div class="card client-card" id="card-school_alpha">
+                            <div class="client-header">
+                                <span class="client-name">School Alpha</span>
+                                <span class="status-badge status-offline" id="badge-school_alpha">
+                                    <span class="pulse-dot muted" id="pulse-school_alpha"></span>
+                                    <span id="text-school_alpha">Offline</span>
+                                </span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.4rem">
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Dataset Size (SQLite):</span>
+                                    <span class="client-metric-val">600 Students</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Last Latency:</span>
+                                    <span class="client-metric-val" id="lat-school_alpha">-</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Local DP Epsilon:</span>
+                                    <span class="client-metric-val" id="eps-school_alpha">-</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleClient('school_alpha')">Toggle Connectivity</button>
+                        </div>
+
+                        <!-- School Beta -->
+                        <div class="card client-card" id="card-school_beta">
+                            <div class="client-header">
+                                <span class="client-name">School Beta</span>
+                                <span class="status-badge status-offline" id="badge-school_beta">
+                                    <span class="pulse-dot muted" id="pulse-school_beta"></span>
+                                    <span id="text-school_beta">Offline</span>
+                                </span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.4rem">
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Dataset Size (SQLite):</span>
+                                    <span class="client-metric-val">550 Students</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Last Latency:</span>
+                                    <span class="client-metric-val" id="lat-school_beta">-</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Local DP Epsilon:</span>
+                                    <span class="client-metric-val" id="eps-school_beta">-</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleClient('school_beta')">Toggle Connectivity</button>
+                        </div>
+
+                        <!-- School Gamma -->
+                        <div class="card client-card" id="card-school_gamma">
+                            <div class="client-header">
+                                <span class="client-name">School Gamma</span>
+                                <span class="status-badge status-offline" id="badge-school_gamma">
+                                    <span class="pulse-dot muted" id="pulse-school_gamma"></span>
+                                    <span id="text-school_gamma">Offline</span>
+                                </span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.4rem">
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Dataset Size (SQLite):</span>
+                                    <span class="client-metric-val">500 Students</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Last Latency:</span>
+                                    <span class="client-metric-val" id="lat-school_gamma">-</span>
+                                </div>
+                                <div class="client-metric-row">
+                                    <span class="client-metric-label">Local DP Epsilon:</span>
+                                    <span class="client-metric-val" id="eps-school_gamma">-</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleClient('school_gamma')">Toggle Connectivity</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Charts section -->
+                <div class="charts-container">
+                    <div class="card">
+                        <h3 class="card-title">Convergence History (F1-score)</h3>
+                        <div class="chart-box">
+                            <canvas id="f1Chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Training Loss Trend</h3>
+                        <div class="chart-box">
+                            <canvas id="lossChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Log banner -->
+                <div class="log-banner">
+                    <span id="log-text">System ready. Click "Start FL Simulation" to begin federated training rounds.</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted)" id="log-timestamp">-</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Charts instantiation
+        const f1Ctx = document.getElementById('f1Chart').getContext('2d');
+        const lossCtx = document.getElementById('lossChart').getContext('2d');
+
+        const chartConfig = (label, color) => ({
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: label,
+                    data: [],
+                    borderColor: color,
+                    backgroundColor: color + '15',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: color
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                    }
+                }
+            }
+        });
+
+        const f1Chart = new Chart(f1Ctx, chartConfig('F1-score', '#6366f1'));
+        const lossChart = new Chart(lossCtx, chartConfig('BCE Loss', '#ef4444'));
+
+        let simulationRunning = false;
+        let lastLoggedRound = -1;
+
+        // Start FL Simulation function
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            const usePaillier = document.getElementById('use-paillier').checked;
+            const useDP = document.getElementById('use-dp').checked;
+            const rounds = document.getElementById('rounds-input').value;
+            const epochs = document.getElementById('epochs-input').value;
+            const lr = document.getElementById('lr-input').value;
+
+            // Update configuration on backend first
+            try {
+                const configRes = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        use_dp: useDP ? "True" : "False",
+                        use_paillier: usePaillier ? "True" : "False",
+                        local_epochs: parseInt(epochs),
+                        lr: parseFloat(lr),
+                        total_rounds: parseInt(rounds)
+                    })
+                });
+
+                if (!configRes.ok) {
+                    const err = await configRes.json();
+                    alert("Config error: " + err.detail);
+                    return;
+                }
+
+                // Trigger start
+                const startRes = await fetch('/api/start', { method: 'POST' });
+                if (startRes.ok) {
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('sim-progress-container').style.display = 'block';
+                    document.getElementById('sim-progress-bar').style.width = '0%';
+                    logMessage("Simulation started! Generating encryption keys and initiating Flower orchestration server...");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to start simulation.");
+            }
+        });
+
+        // Toggle client connectivity status
+        async function toggleClient(schoolName) {
+            try {
+                const res = await fetch(`/api/client/${schoolName}/toggle`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    logMessage(`Toggled ${schoolName} connection status to: ${data.new_status.toUpperCase()}`);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function logMessage(msg) {
+            document.getElementById('log-text').innerText = msg;
+            document.getElementById('log-timestamp').innerText = new Date().toLocaleTimeString();
+        }
+
+        // Apply UI updates to a client card based on state
+        function updateClientCard(schoolName, clientInfo) {
+            const badge = document.getElementById(`badge-${schoolName}`);
+            const pulse = document.getElementById(`pulse-${schoolName}`);
+            const text = document.getElementById(`text-${schoolName}`);
+            const lat = document.getElementById(`lat-${schoolName}`);
+            const eps = document.getElementById(`eps-${schoolName}`);
+
+            // Clear old classes
+            badge.className = 'status-badge';
+            pulse.className = 'pulse-dot';
+
+            const status = clientInfo.status;
+            text.innerText = status.toUpperCase();
+
+            if (status === 'Active') {
+                badge.classList.add('status-active');
+                pulse.classList.add('success');
+            } else if (status === 'Idle') {
+                badge.classList.add('status-idle');
+                pulse.classList.add('primary');
+            } else if (status === 'Failed') {
+                badge.classList.add('status-failed');
+                pulse.classList.add('danger');
+            } else if (status === 'Offline') {
+                badge.classList.add('status-offline');
+                pulse.classList.add('muted');
+            }
+
+            lat.innerText = clientInfo.last_latency ? `${clientInfo.last_latency.toFixed(2)} s` : '-';
+            eps.innerText = clientInfo.last_epsilon ? clientInfo.last_epsilon.toFixed(2) : '-';
+        }
+
+        // Poll telemetry data
+        async function pollTelemetry() {
+            try {
+                const res = await fetch('/api/telemetry');
+                if (!res.ok) return;
+
+                const data = await res.json();
+                
+                // Update simulation status
+                simulationRunning = data.simulation_running;
+                const statusBanner = document.getElementById('sim-status-banner');
+                const statusPulse = document.getElementById('status-pulse');
+                const statusText = document.getElementById('status-text');
+
+                statusBanner.className = 'status-badge';
+                statusPulse.className = 'pulse-dot';
+
+                if (simulationRunning) {
+                    statusBanner.classList.add('status-active');
+                    statusPulse.classList.add('success');
+                    statusText.innerText = 'SIMULATION RUNNING';
+                    document.getElementById('start-btn').disabled = true;
+                } else {
+                    statusBanner.classList.add('status-offline');
+                    statusPulse.classList.add('muted');
+                    statusText.innerText = 'OFFLINE';
+                    document.getElementById('start-btn').disabled = false;
+                    document.getElementById('sim-progress-container').style.display = 'none';
+                }
+
+                // Update configuration inputs if simulation not running
+                if (!simulationRunning) {
+                    document.getElementById('use-paillier').checked = data.config.use_paillier === "True";
+                    document.getElementById('use-dp').checked = data.config.use_dp === "True";
+                    document.getElementById('rounds-input').value = data.config.total_rounds;
+                    document.getElementById('epochs-input').value = data.config.local_epochs;
+                    document.getElementById('lr-input').value = data.config.lr;
+                }
+
+                // Update Client Cards
+                for (const [school, clientInfo] of Object.entries(data.clients)) {
+                    updateClientCard(school, clientInfo);
+                }
+
+                // Update charts and global stats if rounds exist
+                const rounds = data.rounds;
+                if (rounds.length > 0) {
+                    const lastRound = rounds[rounds.length - 1];
+                    
+                    document.getElementById('stat-f1').innerText = lastRound.f1_score.toFixed(4);
+                    document.getElementById('stat-accuracy').innerText = `${(lastRound.accuracy * 100).toFixed(1)}%`;
+                    
+                    // Sum total communication overhead
+                    const totalComm = rounds.reduce((acc, r) => acc + r.comm_overhead_mb, 0);
+                    document.getElementById('stat-comm').innerText = `${totalComm.toFixed(2)} MB`;
+                    
+                    // Max epsilon
+                    const maxEps = Math.max(...rounds.map(r => r.max_epsilon));
+                    document.getElementById('stat-epsilon').innerText = maxEps > 0 ? maxEps.toFixed(2) : '0.0 (DP Off)';
+
+                    // Update Progress Bar
+                    if (simulationRunning) {
+                        const totalConfiguredRounds = parseInt(data.config.total_rounds);
+                        const progress = (lastRound.round / totalConfiguredRounds) * 100;
+                        document.getElementById('sim-progress-bar').style.width = `${progress}%`;
+                    }
+
+                    // Update Charts
+                    const roundLabels = rounds.map(r => `Round ${r.round}`);
+                    const f1Data = rounds.map(r => r.f1_score);
+                    const lossData = rounds.map(r => r.loss);
+
+                    f1Chart.data.labels = roundLabels;
+                    f1Chart.data.datasets[0].data = f1Data;
+                    f1Chart.update();
+
+                    lossChart.data.labels = roundLabels;
+                    lossChart.data.datasets[0].data = lossData;
+                    lossChart.update();
+
+                    // Log updates
+                    if (lastRound.round > lastLoggedRound) {
+                        lastLoggedRound = lastRound.round;
+                        const encryptionText = lastRound.is_encrypted ? "Paillier homomorphic encryption applied." : "Plaintext updates aggregated.";
+                        logMessage(`[Round ${lastRound.round} Complete] Aggregation complete. F1-score: ${lastRound.f1_score.toFixed(4)}. ${encryptionText}`);
+                    }
+                } else {
+                    // Reset stats
+                    document.getElementById('stat-f1').innerText = '-';
+                    document.getElementById('stat-accuracy').innerText = '-';
+                    document.getElementById('stat-comm').innerText = '-';
+                    document.getElementById('stat-epsilon').innerText = '-';
+
+                    f1Chart.data.labels = [];
+                    f1Chart.data.datasets[0].data = [];
+                    f1Chart.update();
+
+                    lossChart.data.labels = [];
+                    lossChart.data.datasets[0].data = [];
+                    lossChart.update();
+                    
+                    lastLoggedRound = -1;
+                }
+
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }
+
+        // Poll every 1 second
+        setInterval(pollTelemetry, 1000);
+        pollTelemetry();
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+flwr==1.8.0
+torch==2.3.0
+opacus==1.4.0
+phe==1.5.0
+fastapi==0.110.0
+uvicorn==0.30.1
+scikit-learn==1.5.0
+pandas==2.2.2
+numpy==1.26.4
+jinja2==3.1.4
+pydantic==2.7.4

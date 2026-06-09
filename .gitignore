@@ -33,3 +33,5 @@ htmlcov/
 *.sqlite
 *.db
 .env.local
+logs/
+results/

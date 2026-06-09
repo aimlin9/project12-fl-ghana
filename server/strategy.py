@@ -1,8 +1,10 @@
+import os
 import torch
 import flwr as fl
 import numpy as np
 import json
 import time
+from datetime import datetime, timezone
 from typing import List, Tuple, Union, Dict, Optional
 from flwr.common import (
     Parameters, FitRes, EvaluateRes, Scalar, ndarrays_to_parameters, parameters_to_ndarrays
@@ -43,13 +45,13 @@ telemetry_data = {
         "use_paillier": "True",
         "local_epochs": 3,
         "lr": 0.01,
-        "total_rounds": 10
+        "total_rounds": 50
     },
     "simulation_running": False
 }
 
 class PaillierFedAvg(fl.server.strategy.Strategy):
-    def __init__(self, key_length=1024):
+    def __init__(self, key_length=2048):
         super().__init__()
         self.model = get_model()
         self.global_weights = get_flat_weights(self.model)
@@ -102,7 +104,7 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         params = ndarrays_to_parameters(ndarrays)
         fit_ins = fl.common.FitIns(params, config)
         
-        clients = client_manager.sample(num_clients=len(telemetry_data["clients"]), min_num_clients=1)
+        clients = client_manager.sample(num_clients=len(telemetry_data["clients"]), min_num_clients=3)
         
         # Update client statuses to Active
         for client in clients:
@@ -235,6 +237,29 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
             "agg_latency": aggregation_latency,
             "is_encrypted": use_paillier
         }
+        
+        # --- Cryptographic Audit Log (Objective 2) ---
+        audit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+        os.makedirs(audit_dir, exist_ok=True)
+        audit_entry = {
+            "round_id": server_round,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "num_clients_succeeded": len(results),
+            "num_clients_failed": len(failures),
+            "encryption_enabled": use_paillier,
+            "key_size_bits": self.key_length if use_paillier else 0,
+            "all_updates_encrypted": use_paillier and all(
+                r[1].metrics.get("is_encrypted") == "True" for r in results
+            ),
+            "plaintext_exposure_count": sum(
+                1 for r in results if r[1].metrics.get("is_encrypted") != "True"
+            ),
+            "aggregation_latency_s": round(aggregation_latency, 4),
+            "comm_overhead_mb": round(float(comm_overhead_bytes) / (1024 * 1024), 4),
+        }
+        audit_path = os.path.join(audit_dir, "crypto_audit.jsonl")
+        with open(audit_path, "a") as f:
+            f.write(json.dumps(audit_entry) + "\n")
         
         return params, {}
 

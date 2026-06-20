@@ -7,10 +7,10 @@ from client.client import StudentFLClient
 def main():
     parser = argparse.ArgumentParser(description="Run simulated school FL client")
     parser.add_argument(
-        "--school", 
-        type=str, 
-        required=True, 
-        choices=["school_alpha", "school_beta", "school_gamma"], 
+        "--school",
+        type=str,
+        required=True,
+        choices=["school_alpha", "school_beta", "school_gamma", "school_delta", "school_epsilon"],
         help="Name of the school node"
     )
     parser.add_argument(

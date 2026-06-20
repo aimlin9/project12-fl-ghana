@@ -20,9 +20,10 @@ wheels/
 .installed.cfg
 *.egg
 .env
-.venv
+.venv/
 env/
 ENV/
+node_modules/
 .vscode/
 .DS_Store
 *.log

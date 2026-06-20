@@ -1,0 +1,88 @@
+.grid { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .row { grid-template-columns: 1fr; }
+}
+
+.chartLarge, .chartSmall, .fullWidth {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(12px);
+}
+
+/* Control bar — Start button + baseline info */
+.controlBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.controlLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.viewLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.baselineBadge {
+  font-size: 0.8rem;
+  color: #d1d5db;
+  background: rgba(249,115,22,0.08);
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.baselineMissing {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.withinTarget { color: #10b981; font-weight: 600; }
+.belowTarget  { color: #f59e0b; font-weight: 500; }
+
+.startBtn {
+  padding: 0.65rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.startBtn:hover { opacity: 0.85; transform: translateY(-1px); }
+.startBtn:active { transform: translateY(0); }
+
+.startBtnRunning {
+  padding: 0.65rem 1.5rem;
+  background: rgba(99,102,241,0.25);
+  color: #a5b4fc;
+  border: 1px solid rgba(99,102,241,0.35);
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: not-allowed;
+  white-space: nowrap;
+}

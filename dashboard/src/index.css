@@ -1,0 +1,26 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #0b0f19;
+  --card:         rgba(17, 25, 40, 0.70);
+  --border:       rgba(255,255,255,0.08);
+  --primary:      #6366f1;
+  --primary-h:    #4f46e5;
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #ef4444;
+  --text:         #f3f4f6;
+  --muted:        #9ca3af;
+  --glow:         radial-gradient(circle at 50% 0%, rgba(99,102,241,0.15), transparent 50%);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg);
+  background-image: var(--glow);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: inherit; }

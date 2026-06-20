@@ -25,9 +25,13 @@ const OPTS = {
   },
   scales: {
     x: {
-      title: { display: true, text: 'Privacy Budget (ε)', color: '#6b7280', font: { size: 11 } },
-      ticks: { color: '#6b7280' },
-      grid:  { color: 'rgba(255,255,255,0.04)' },
+      type: 'logarithmic',
+      title: { display: true, text: 'Privacy Budget (ε)  ←  stronger privacy', color: '#6b7280', font: { size: 11 } },
+      ticks: {
+        color: '#6b7280',
+        callback: v => Number.isInteger(Math.log10(v)) || [1,2,5,10,20,50].includes(v) ? v : '',
+      },
+      grid: { color: 'rgba(255,255,255,0.04)' },
     },
     y: {
       min: 0, max: 1,

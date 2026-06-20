@@ -171,14 +171,15 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         params = ndarrays_to_parameters(_global_weights_to_ndarrays(self.model, self.global_weights))
         fit_ins = fl.common.FitIns(params, config)
 
+        available = client_manager.num_available()
         online_count = sum(
             1 for info in telemetry_data["clients"].values()
             if info.get("status") != "Offline"
         )
-        online_count = max(online_count, 1)
+        sample_count = min(available, max(online_count, 1))
         clients = client_manager.sample(
-            num_clients=online_count,
-            min_num_clients=max(1, min(2, online_count)),
+            num_clients=sample_count,
+            min_num_clients=max(1, min(2, sample_count)),
         )
 
         for client in clients:
@@ -325,11 +326,13 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
     def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager) -> List[Tuple[ClientProxy, fl.common.EvaluateIns]]:
         params = ndarrays_to_parameters(_global_weights_to_ndarrays(self.model, self.global_weights))
         evaluate_ins = fl.common.EvaluateIns(params, {})
+        available = client_manager.num_available()
         online_count = max(1, sum(
             1 for info in telemetry_data["clients"].values()
             if info.get("status") != "Offline"
         ))
-        clients = client_manager.sample(num_clients=online_count, min_num_clients=1)
+        sample_count = min(available, online_count)
+        clients = client_manager.sample(num_clients=sample_count, min_num_clients=1)
         return [(client, evaluate_ins) for client in clients]
 
     def aggregate_evaluate(

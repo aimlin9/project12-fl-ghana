@@ -58,13 +58,17 @@ def update_config(config: ConfigModel):
     from server.strategy import SCHOOL_NAMES_ALL
     schools = SCHOOL_NAMES_ALL[:num_nodes]
 
-    # Rebuild clients dict for the new node count
+    # Rebuild clients dict — always reset status to Idle on config save
     existing = telemetry_data["clients"]
     new_clients = {}
     for s in schools:
-        new_clients[s] = existing.get(s, {
-            "status": "Idle", "last_active": "-", "last_latency": 0.0, "last_epsilon": 0.0
-        })
+        prev = existing.get(s, {})
+        new_clients[s] = {
+            "status": "Idle",
+            "last_active": prev.get("last_active", "-"),
+            "last_latency": prev.get("last_latency", 0.0),
+            "last_epsilon": prev.get("last_epsilon", 0.0),
+        }
     telemetry_data["clients"] = new_clients
 
     telemetry_data["config"]["use_dp"]            = config.use_dp

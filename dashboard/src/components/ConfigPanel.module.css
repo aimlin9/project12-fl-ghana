@@ -60,6 +60,17 @@
 .input:focus { border-color: var(--primary); }
 .input:disabled { opacity: 0.5; cursor: not-allowed; }
 
+select.input {
+  background: #1e2433;
+  color: var(--text);
+  cursor: pointer;
+}
+
+select.input option {
+  background: #1e2433;
+  color: var(--text);
+}
+
 .btnSave {
   background: rgba(99,102,241,0.15);
   border: 1px solid rgba(99,102,241,0.35);

@@ -1,15 +1,32 @@
 version: '3.8'
 
+# Cross-School Federated Learning — Docker Compose
+# Default: 3 school nodes (alpha, beta, gamma)
+# 5-node demo: uncomment client_delta and client_epsilon services below
+
 services:
   server:
     build:
       context: .
       dockerfile: docker/Dockerfile.server
     ports:
-      - "8000:8000"
-      - "8088:8088"
+      - "8000:8000"   # FastAPI REST API
+      - "8088:8088"   # Flower gRPC server
     volumes:
       - ./data:/app/data
+      - ./logs:/app/logs
+      - ./results:/app/results
+    networks:
+      - fl-network
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: ../docker/Dockerfile.dashboard
+    ports:
+      - "3000:3000"   # React admin portal — open http://localhost:3000
+    depends_on:
+      - server
     networks:
       - fl-network
 
@@ -48,6 +65,34 @@ services:
       - ./data:/app/data
     networks:
       - fl-network
+
+  # --- Optional: uncomment for 4-node or 5-node simulation ---
+  # Before enabling, run:
+  #   python scripts/partition_oulad.py --nodes 5 --output data/partitions/
+
+  # client_delta:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.client
+  #   depends_on:
+  #     - server
+  #   command: python scripts/run_client.py --school school_delta --server server:8088
+  #   volumes:
+  #     - ./data:/app/data
+  #   networks:
+  #     - fl-network
+
+  # client_epsilon:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.client
+  #   depends_on:
+  #     - server
+  #   command: python scripts/run_client.py --school school_epsilon --server server:8088
+  #   volumes:
+  #     - ./data:/app/data
+  #   networks:
+  #     - fl-network
 
 networks:
   fl-network:

@@ -1,14 +1,26 @@
-from opacus import PrivacyEngine
 import warnings
 
+try:
+    from opacus import PrivacyEngine as _PrivacyEngine
+    OPACUS_AVAILABLE = True
+except ImportError:
+    _PrivacyEngine = None
+    OPACUS_AVAILABLE = False
+
+
 def make_private_training(model, optimizer, train_loader, noise_multiplier=1.1, max_grad_norm=1.0):
-    """
-    Wrap PyTorch model, optimizer, and data_loader for DP-SGD training using Opacus.
-    """
-    # Suppress Opacus warnings about non-standard modules if any
+    """Wrap model/optimizer/loader for DP-SGD. Falls back to no-op if opacus is not installed."""
+    if not OPACUS_AVAILABLE:
+        warnings.warn(
+            "opacus is not installed — running without differential privacy. "
+            "Install it with: pip install opacus==1.4.0",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return model, optimizer, train_loader, None
+
     warnings.filterwarnings("ignore", category=UserWarning, module="opacus")
-    
-    privacy_engine = PrivacyEngine()
+    privacy_engine = _PrivacyEngine()
     model, optimizer, train_loader = privacy_engine.make_private(
         module=model,
         optimizer=optimizer,
@@ -17,6 +29,7 @@ def make_private_training(model, optimizer, train_loader, noise_multiplier=1.1, 
         max_grad_norm=max_grad_norm,
     )
     return model, optimizer, train_loader, privacy_engine
+
 
 def get_privacy_spent(privacy_engine, delta=1e-5):
     """Get the current epsilon value from the privacy engine."""

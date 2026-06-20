@@ -11,7 +11,7 @@ import os
 import sqlite3
 import numpy as np
 
-SCHOOLS = ["school_alpha", "school_beta", "school_gamma"]
+SCHOOLS = ["school_alpha", "school_beta", "school_gamma", "school_delta", "school_epsilon"]
 NUM_RECORDS = {
     "school_alpha": 600,
     "school_beta": 550,
@@ -30,10 +30,14 @@ SCHOOL_PROFILES = {
 }
 
 
+_SCHOOL_ORDER = ["school_alpha", "school_beta", "school_gamma", "school_delta", "school_epsilon"]
+
 def generate_school_data(school_name, num_records, output_dir="data/partitions"):
     """Generate a single school's SQLite database with synthetic student data."""
     os.makedirs(output_dir, exist_ok=True)
-    np.random.seed(42 + hash(school_name) % 100)
+    # Use index-based seed — hash() is non-deterministic in Python 3.3+
+    seed = 42 + _SCHOOL_ORDER.index(school_name) if school_name in _SCHOOL_ORDER else 99
+    np.random.seed(seed)
 
     profile = SCHOOL_PROFILES.get(school_name, {"attendance": 0.80, "quiz": 70.0, "logins": 7.0})
     avg_attendance = profile["attendance"]

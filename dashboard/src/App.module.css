@@ -1,0 +1,42 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem 2rem 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.toastOk, .toastError {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 999;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: slideIn 0.2s ease;
+}
+
+.toastOk    { background: #064e3b; color: #6ee7b7; border: 1px solid #065f46; }
+.toastError { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+
+.errorBar {
+  background: rgba(239,68,68,0.1);
+  border-bottom: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+  text-align: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

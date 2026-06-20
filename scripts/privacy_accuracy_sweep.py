@@ -115,7 +115,7 @@ def run_sweep(school="school_alpha", num_rounds=10, local_epochs=3, lr=0.01, del
 
 def main():
     parser = argparse.ArgumentParser(description="Privacy-Accuracy trade-off sweep")
-    parser.add_argument("--school",  default="school_alpha")
+    parser.add_argument("--school",  default="school_gamma")
     parser.add_argument("--rounds",  type=int, default=10,  help="FL rounds to simulate per config")
     parser.add_argument("--epochs",  type=int, default=3,   help="Local epochs per round")
     parser.add_argument("--lr",      type=float, default=0.01)

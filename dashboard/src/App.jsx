@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement,
+  CategoryScale, LinearScale, LogarithmicScale, PointElement, LineElement,
   BarElement, Title, Tooltip, Legend, Filler,
 } from 'chart.js'
 import { fetchTelemetry, startSimulation, updateConfig, toggleClient } from './api.js'
@@ -14,7 +14,7 @@ import StatusBanner from './components/StatusBanner.jsx'
 import styles from './App.module.css'
 
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement,
+  CategoryScale, LinearScale, LogarithmicScale, PointElement, LineElement,
   BarElement, Title, Tooltip, Legend, Filler
 )
 

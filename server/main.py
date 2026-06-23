@@ -29,8 +29,9 @@ def get_dashboard():
         raise HTTPException(status_code=404, detail="Dashboard template not found")
     with open(template_path, "r", encoding="utf-8") as f:
         html_content = f.read()
-    return html_content
-
+    response = HTMLResponse(content=html_content)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return response
 # Get telemetry data
 @app.get("/api/telemetry")
 def get_telemetry():

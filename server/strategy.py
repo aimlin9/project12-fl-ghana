@@ -45,13 +45,13 @@ telemetry_data = {
         "use_paillier": "True",
         "local_epochs": 3,
         "lr": 0.01,
-        "total_rounds": 50
+        "total_rounds": 3
     },
     "simulation_running": False
 }
 
 class PaillierFedAvg(fl.server.strategy.Strategy):
-    def __init__(self, key_length=2048):
+    def __init__(self, key_length=1024):   # was 2048
         super().__init__()
         self.model = get_model()
         self.global_weights = get_flat_weights(self.model)
@@ -213,6 +213,9 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         
         # Apply average update to global weights
         self.global_weights = self.global_weights + avg_update
+        print(f"[DEBUG] Round {server_round}: avg_update sum={np.abs(avg_update).sum():.6f}, global_weights sum={np.abs(self.global_weights).sum():.6f}")
+        
+        
         
         # Convert global weights to parameter object
         ndarrays = []
@@ -317,6 +320,7 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         round_metrics = telemetry_data.get("last_round_metrics", {})
         round_metrics["loss"] = float(avg_loss)
         round_metrics["accuracy"] = float(avg_accuracy)
+        round_metrics["f1_score"] = float(avg_f1)
         telemetry_data["rounds"].append(round_metrics)
         
         return avg_loss, {"accuracy": avg_accuracy, "f1_score": avg_f1}

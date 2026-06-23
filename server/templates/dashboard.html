@@ -721,50 +721,78 @@
         const lossChart = new Chart(lossCtx, chartConfig('BCE Loss', '#ef4444'));
 
         let simulationRunning = false;
-        let lastLoggedRound = -1;
+let lastLoggedRound = -1;
+
+// Debounced config sync to backend
+let configSyncTimeout = null;
+
+async function syncConfigToServer() {
+    if (simulationRunning) return; // can't update while running, backend will reject anyway
+
+    const usePaillier = document.getElementById('use-paillier').checked;
+    const useDP = document.getElementById('use-dp').checked;
+    const rounds = document.getElementById('rounds-input').value;
+    const epochs = document.getElementById('epochs-input').value;
+    const lr = document.getElementById('lr-input').value;
+
+    try {
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_dp: useDP ? "True" : "False",
+                use_paillier: usePaillier ? "True" : "False",
+                local_epochs: parseInt(epochs),
+                lr: parseFloat(lr),
+                total_rounds: parseInt(rounds)
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            console.warn("Config sync failed:", err.detail);
+        }
+    } catch (err) {
+        console.error("Config sync error:", err);
+    }
+}
+
+function scheduleConfigSync() {
+    if (configSyncTimeout) clearTimeout(configSyncTimeout);
+    configSyncTimeout = setTimeout(syncConfigToServer, 500);
+}
+
+// Wire up listeners on all config inputs
+['rounds-input', 'epochs-input', 'lr-input'].forEach(id => {
+    document.getElementById(id).addEventListener('input', scheduleConfigSync);
+});
+['use-paillier', 'use-dp'].forEach(id => {
+    document.getElementById(id).addEventListener('change', scheduleConfigSync);
+});
 
         // Start FL Simulation function
         document.getElementById('start-btn').addEventListener('click', async () => {
-            const usePaillier = document.getElementById('use-paillier').checked;
-            const useDP = document.getElementById('use-dp').checked;
-            const rounds = document.getElementById('rounds-input').value;
-            const epochs = document.getElementById('epochs-input').value;
-            const lr = document.getElementById('lr-input').value;
+    // Make sure any pending config change is flushed immediately before starting
+    if (configSyncTimeout) {
+        clearTimeout(configSyncTimeout);
+        await syncConfigToServer();
+    }
 
-            // Update configuration on backend first
-            try {
-                const configRes = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        use_dp: useDP ? "True" : "False",
-                        use_paillier: usePaillier ? "True" : "False",
-                        local_epochs: parseInt(epochs),
-                        lr: parseFloat(lr),
-                        total_rounds: parseInt(rounds)
-                    })
-                });
-
-                if (!configRes.ok) {
-                    const err = await configRes.json();
-                    alert("Config error: " + err.detail);
-                    return;
-                }
-
-                // Trigger start
-                const startRes = await fetch('/api/start', { method: 'POST' });
-                if (startRes.ok) {
-                    document.getElementById('start-btn').disabled = true;
-                    document.getElementById('sim-progress-container').style.display = 'block';
-                    document.getElementById('sim-progress-bar').style.width = '0%';
-                    logMessage("Simulation started! Generating encryption keys and initiating Flower orchestration server...");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Failed to start simulation.");
-            }
-        });
-
+    try {
+        const startRes = await fetch('/api/start', { method: 'POST' });
+        if (startRes.ok) {
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('sim-progress-container').style.display = 'block';
+            document.getElementById('sim-progress-bar').style.width = '0%';
+            logMessage("Simulation started! Generating encryption keys and initiating Flower orchestration server...");
+        } else {
+            const err = await startRes.json();
+            alert("Start error: " + err.detail);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Failed to start simulation.");
+    }
+});
         // Toggle client connectivity status
         async function toggleClient(schoolName) {
             try {
@@ -847,12 +875,15 @@
                 }
 
                 // Update configuration inputs if simulation not running
-                if (!simulationRunning) {
-                    document.getElementById('use-paillier').checked = data.config.use_paillier === "True";
-                    document.getElementById('use-dp').checked = data.config.use_dp === "True";
-                    document.getElementById('rounds-input').value = data.config.total_rounds;
-                    document.getElementById('epochs-input').value = data.config.local_epochs;
-                    document.getElementById('lr-input').value = data.config.lr;
+               const configFocused = document.activeElement && 
+               ['rounds-input', 'epochs-input', 'lr-input', 'use-paillier', 'use-dp'].includes(document.activeElement.id);
+
+               if (!simulationRunning && !configFocused) {
+                   document.getElementById('use-paillier').checked = data.config.use_paillier === "True";
+                   document.getElementById('use-dp').checked = data.config.use_dp === "True";
+                   document.getElementById('rounds-input').value = data.config.total_rounds;
+                   document.getElementById('epochs-input').value = data.config.local_epochs;
+                   document.getElementById('lr-input').value = data.config.lr;
                 }
 
                 // Update Client Cards

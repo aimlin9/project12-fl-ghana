@@ -53,7 +53,7 @@ class StudentFLClient(fl.client.NumPyClient):
         print(f"[{self.school_name}] Initialized with {self.num_train} train samples, {self.num_test} test samples.")
 
     def get_parameters(self, config):
-        return [p.cpu().numpy() for p in self.model.parameters()]
+       return [p.detach().cpu().numpy() for p in self.model.parameters()]
 
     def fit(self, parameters, config):
         # 0. Check simulated online status from server

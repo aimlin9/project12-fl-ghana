@@ -351,6 +351,7 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         auc_roc_scores = []
 
         round_metrics = telemetry_data.get("last_round_metrics", {})
+        round_metrics.setdefault("round", server_round)
         comm_mb = round_metrics.get("comm_overhead_mb", 0.0)
         max_epsilon = round_metrics.get("max_epsilon", 0.0)
 

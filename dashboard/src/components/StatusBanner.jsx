@@ -7,7 +7,7 @@ export default function StatusBanner({ rounds, totalRounds }) {
       <span className={styles.dot} />
       <span>
         {last
-          ? `Simulation running — Round ${last.round} of ${totalRounds} completed · F1: ${(last.f1_score ?? 0).toFixed(3)} · Acc: ${(last.accuracy ?? 0).toFixed(3)}`
+          ? `Simulation running — Round ${last.round ?? rounds.length} of ${totalRounds} completed · F1: ${(last.f1_score ?? 0).toFixed(3)} · Acc: ${(last.accuracy ?? 0).toFixed(3)}`
           : `Simulation starting — waiting for school nodes to connect…`}
       </span>
     </div>

@@ -32,18 +32,19 @@ from security.privacy import make_private_training, get_privacy_spent
 NOISE_MULTIPLIERS = [0.5, 0.8, 1.0, 1.1, 1.3, 1.5, 2.0, 3.0]
 
 
-def evaluate_model(model, test_loader, device):
+def evaluate_model(model, test_loader, device, pos_weight=None):
     model.eval()
-    criterion = torch.nn.BCELoss()
+    pw = torch.tensor([pos_weight]) if pos_weight else None
+    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pw.to(device) if pw is not None else None)
     total_loss = 0.0
     all_probs, all_preds, all_labels = [], [], []
 
     with torch.no_grad():
         for X_batch, y_batch in test_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-            outputs = model(X_batch)
-            total_loss += criterion(outputs, y_batch).item() * len(X_batch)
-            probs  = outputs.squeeze(1).cpu().numpy()
+            logits = model(X_batch)
+            total_loss += criterion(logits, y_batch).item() * len(X_batch)
+            probs  = torch.sigmoid(logits).squeeze(1).cpu().numpy()
             preds  = (probs >= 0.5).astype(float)
             labels = y_batch.squeeze(1).cpu().numpy()
             all_probs.extend(probs.tolist())
@@ -67,7 +68,8 @@ def evaluate_model(model, test_loader, device):
 
 def run_sweep(school="school_alpha", num_rounds=10, local_epochs=3, lr=0.01, delta=1e-5):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_loader, test_loader, _, _ = load_data(school)
+    train_loader, test_loader, _, _, pos_w = load_data(school)
+    pos_w = min(pos_w, 10.0)
 
     results = []
     print(f"\nPrivacy-Accuracy sweep on {school} — {num_rounds} rounds × {local_epochs} epochs\n")
@@ -77,7 +79,8 @@ def run_sweep(school="school_alpha", num_rounds=10, local_epochs=3, lr=0.01, del
     for noise_mult in NOISE_MULTIPLIERS:
         model     = get_model().to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        criterion = torch.nn.BCELoss()
+        pos_weight_t = torch.tensor([pos_w]).to(device)
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_t)
 
         model, optimizer, dp_loader, engine = make_private_training(
             model, optimizer, train_loader,
@@ -89,13 +92,13 @@ def run_sweep(school="school_alpha", num_rounds=10, local_epochs=3, lr=0.01, del
             for X_batch, y_batch in dp_loader:
                 X_batch, y_batch = X_batch.to(device), y_batch.to(device)
                 optimizer.zero_grad()
-                outputs = model(X_batch)
-                loss = criterion(outputs, y_batch)
+                logits = model(X_batch)
+                loss = criterion(logits, y_batch)
                 loss.backward()
                 optimizer.step()
 
         epsilon = get_privacy_spent(engine, delta=delta)
-        _, acc, f1, auc = evaluate_model(model, test_loader, device)
+        _, acc, f1, auc = evaluate_model(model, test_loader, device, pos_weight=pos_w)
 
         print(f"{noise_mult:>10.2f}  {epsilon:>10.4f}  {acc:>10.4f}  {f1:>12.4f}  {auc:>10.4f}")
 

@@ -51,7 +51,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
       fill: true,
     },
     {
-      label: 'Accuracy',
+      label: 'Balanced Accuracy',
       data: acc,
       borderColor: '#10b981',
       backgroundColor: 'transparent',

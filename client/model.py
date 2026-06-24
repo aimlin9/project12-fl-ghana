@@ -9,16 +9,14 @@ class StudentMLP(nn.Module):
         self.fc2 = nn.Linear(64, 32)
         self.relu2 = nn.ReLU()
         self.fc3 = nn.Linear(32, 1)
-        self.sigmoid = nn.Sigmoid()
-        
+
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu1(x)
         x = self.fc2(x)
         x = self.relu2(x)
         x = self.fc3(x)
-        x = self.sigmoid(x)
-        return x
+        return x  # raw logit — BCEWithLogitsLoss applies sigmoid internally
 
 def get_model():
     return StudentMLP()

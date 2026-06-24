@@ -60,9 +60,15 @@ def load_data(school_name, db_dir="data/partitions", batch_size=32, test_split=0
     
     train_ds = TensorDataset(torch.tensor(X_train), torch.tensor(y_train))
     test_ds = TensorDataset(torch.tensor(X_test), torch.tensor(y_test))
-    
+
     # Use drop_last=True for Opacus if batch sizes are strict, but standard is fine
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
-    
-    return train_loader, test_loader, len(X_train), len(X_test)
+
+    # Class imbalance weight: penalise missing an at-risk student more heavily.
+    # Capped at 10 to prevent training instability with very imbalanced schools.
+    num_pos = float(y_train.sum())
+    num_neg = float(len(y_train) - num_pos)
+    pos_weight = min(num_neg / max(num_pos, 1.0), 10.0)
+
+    return train_loader, test_loader, len(X_train), len(X_test), pos_weight

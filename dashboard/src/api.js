@@ -12,6 +12,12 @@ export async function startSimulation() {
   return res.json()
 }
 
+export async function stopSimulation() {
+  const res = await fetch(`${BASE}/stop`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to stop simulation')
+  return res.json()
+}
+
 export async function updateConfig(config) {
   const res = await fetch(`${BASE}/config`, {
     method: 'POST',

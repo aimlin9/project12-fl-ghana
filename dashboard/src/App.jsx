@@ -4,7 +4,7 @@ import {
   CategoryScale, LinearScale, LogarithmicScale, PointElement, LineElement,
   BarElement, Title, Tooltip, Legend, Filler,
 } from 'chart.js'
-import { fetchTelemetry, startSimulation, updateConfig, toggleClient } from './api.js'
+import { fetchTelemetry, startSimulation, stopSimulation, updateConfig, toggleClient } from './api.js'
 import Header from './components/Header.jsx'
 import TabNav from './components/TabNav.jsx'
 import DistrictView from './components/DistrictView.jsx'
@@ -58,6 +58,15 @@ export default function App() {
     }
   }
 
+  const handleStop = async () => {
+    try {
+      await stopSimulation()
+      notify('Stopping simulation — current round will finish then it will halt.')
+    } catch (e) {
+      notify(e.message, true)
+    }
+  }
+
   const handleConfigSave = async (cfg) => {
     try {
       await updateConfig(cfg)
@@ -99,7 +108,7 @@ export default function App() {
 
       <main className={styles.main}>
         {activeTab === 0 && (
-          <DistrictView telemetry={telemetry} onStart={handleStart} running={running} />
+          <DistrictView telemetry={telemetry} onStart={handleStart} onStop={handleStop} running={running} />
         )}
         {activeTab === 1 && (
           <SchoolAdminView
@@ -112,6 +121,7 @@ export default function App() {
             telemetry={telemetry}
             onSave={handleConfigSave}
             onStart={handleStart}
+            onStop={handleStop}
             running={running}
           />
         )}

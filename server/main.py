@@ -40,9 +40,6 @@ class ConfigModel(BaseModel):
     paillier_key_bits: int = 2048
 
 
-# ---------------------------------------------------------------------------
-# Telemetry & config
-# ---------------------------------------------------------------------------
 
 @app.get("/api/telemetry")
 def get_telemetry():

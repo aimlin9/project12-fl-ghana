@@ -288,6 +288,7 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
 
         comm_overhead_mb = float(comm_overhead_bytes) / (1024 * 1024)
 
+
         telemetry_data["last_round_metrics"] = {
             "round":          server_round,
             "active_clients": len(results),

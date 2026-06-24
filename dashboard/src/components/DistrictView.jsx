@@ -6,7 +6,7 @@ import PrivacyAccuracyScatter from './PrivacyAccuracyScatter.jsx'
 import { fetchBaseline } from '../api.js'
 import styles from './DistrictView.module.css'
 
-export default function DistrictView({ telemetry, onStart, running }) {
+export default function DistrictView({ telemetry, onStart, onStop, running }) {
   const rounds  = telemetry?.rounds ?? []
   const clients = telemetry?.clients ?? {}
   const config  = telemetry?.config ?? {}
@@ -47,16 +47,24 @@ export default function DistrictView({ telemetry, onStart, running }) {
             </span>
           )}
         </div>
-        <button
-          className={running ? styles.startBtnRunning : styles.startBtn}
-          onClick={onStart}
-          disabled={running}
-        >
-          {running ? '● Simulation Running…' : '▶  Start FL Simulation'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            className={running ? styles.startBtnRunning : styles.startBtn}
+            onClick={onStart}
+            disabled={running}
+          >
+            {running ? '● Simulation Running…' : '▶  Start FL Simulation'}
+          </button>
+          {running && (
+            <button className={styles.stopBtn} onClick={onStop}>
+              ■ Stop
+            </button>
+          )}
+        </div>
       </div>
 
-      <MetricCards rounds={rounds} last={last} clients={clients} config={config} />
+      <MetricCards rounds={rounds} last={last} clients={clients} config={config}
+                   liveAccuracy={telemetry?.live_accuracy} running={running} />
 
       <div className={styles.row}>
         <div className={styles.chartLarge}>

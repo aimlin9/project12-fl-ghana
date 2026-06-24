@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>FL Ghana — Project Study Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1a1a2e; background: #fff; }
+  .cover { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 60px 50px; min-height: 220px; }
+  .cover h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .cover h2 { font-size: 16px; font-weight: 400; opacity: 0.75; margin-bottom: 20px; }
+  .cover .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 4px 14px; font-size: 12px; }
+  .content { max-width: 820px; margin: 0 auto; padding: 40px 50px; }
+  h2 { font-size: 20px; color: #0f3460; border-left: 4px solid #6366f1; padding-left: 12px; margin: 36px 0 14px; }
+  h3 { font-size: 15px; color: #1a1a2e; margin: 22px 0 8px; font-weight: 600; }
+  p { margin-bottom: 12px; color: #333; }
+  code { background: #f0f0f8; border: 1px solid #d0d0e8; border-radius: 4px; padding: 1px 6px; font-family: 'Consolas', monospace; font-size: 12.5px; color: #5b21b6; }
+  pre { background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 18px; margin: 14px 0; font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.6; overflow-x: auto; }
+  pre .comment { color: #6c7086; }
+  pre .keyword { color: #cba6f7; }
+  pre .string { color: #a6e3a1; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th { background: #0f3460; color: white; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #e5e7eb; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+  .highlight { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .tip { background: #f0fdf4; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .warning { background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .flow { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 20px; margin: 14px 0; text-align: center; font-size: 13px; line-height: 2.2; }
+  .flow .arrow { color: #6366f1; font-size: 18px; }
+  .section-num { display: inline-block; background: #6366f1; color: white; border-radius: 50%; width: 28px; height: 28px; text-align: center; line-height: 28px; font-size: 13px; font-weight: 700; margin-right: 8px; }
+  ul { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 5px; }
+  .qa { background: #f8f9ff; border: 1px solid #e0e7ff; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+  .qa .q { color: #4f46e5; font-weight: 700; margin-bottom: 6px; }
+  .qa .a { color: #374151; }
+  .toc { background: #f8f9ff; border: 1px solid #e0e7ff; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+  .toc h3 { color: #4f46e5; margin-bottom: 12px; margin-top: 0; }
+  .toc ol { margin-left: 20px; }
+  .toc li { margin-bottom: 4px; color: #4f46e5; }
+  .page-break { page-break-after: always; }
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    pre { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .highlight, .tip, .warning, .flow, .qa, .toc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Cross-School Federated Learning System</h1>
+  <h2>Ghanaian District Schools — Privacy-Preserving Student At-Risk Prediction</h2>
+  <p style="opacity:0.6; font-size:13px;">Complete Project Study Guide — Group 7</p>
+  <div class="badges">
+    <span class="badge">Flower 1.8.0</span>
+    <span class="badge">PyTorch 2.3.0</span>
+    <span class="badge">Paillier Encryption</span>
+    <span class="badge">DP-SGD Opacus 1.4</span>
+    <span class="badge">React 18 + Vite</span>
+    <span class="badge">FastAPI</span>
+  </div>
+</div>
+
+<div class="content">
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li>The Big Picture — What the Project Does</li>
+    <li>Project File Structure</li>
+    <li>The Data Layer — School Databases</li>
+    <li>The AI Model — MLP Neural Network</li>
+    <li>Privacy Protection — Differential Privacy (DP-SGD)</li>
+    <li>Encryption — Paillier Homomorphic Encryption</li>
+    <li>The FL Client — Each School's Node</li>
+    <li>The FL Server Strategy — FedAvg Aggregation</li>
+    <li>The API Server — FastAPI Bridge</li>
+    <li>The React Dashboard</li>
+    <li>Supporting Scripts</li>
+    <li>How a Full Round Works (End-to-End Flow)</li>
+    <li>Likely Exam / Presentation Questions &amp; Answers</li>
+    <li>Startup Commands Cheatsheet</li>
+  </ol>
+</div>
+
+<!-- ===== SECTION 1 ===== -->
+<h2><span class="section-num">1</span>The Big Picture</h2>
+
+<p>Your project predicts which students are "at-risk" of dropping out or failing, across three Ghanaian schools, <strong>without any school sharing its raw student data</strong>. This is the core innovation.</p>
+
+<div class="highlight">
+  <strong>The Problem:</strong> Student data is sensitive and protected by privacy laws. Schools cannot legally send student records to a central server. But a model trained on only one school's data won't generalise well to other schools.
+</div>
+
+<div class="tip">
+  <strong>The Solution — Federated Learning:</strong> Each school trains a local AI model on its own data. Only the <em>model update</em> (not the data) is sent to the server. The server combines all updates into a better global model. No raw data ever leaves the school.
+</div>
+
+<p>On top of Federated Learning, the project adds <strong>two extra layers of security</strong>:</p>
+<ul>
+  <li><strong>Differential Privacy (DP-SGD)</strong> — adds mathematical noise during training so the model update cannot be reverse-engineered to reveal individual student records</li>
+  <li><strong>Paillier Homomorphic Encryption</strong> — encrypts the model update before it is sent, so even the server never sees the raw update values</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 2 ===== -->
+<h2><span class="section-num">2</span>Project File Structure</h2>
+
+<pre>
+project12-fl-ghana/
+│
+├── data/partitions/          <span class="comment"># SQLite databases — one per school</span>
+│   ├── school_alpha.db       <span class="comment"># 600 students, 1.5% at-risk (urban)</span>
+│   ├── school_beta.db        <span class="comment"># 550 students, 4.7% at-risk (suburban)</span>
+│   └── school_gamma.db       <span class="comment"># 500 students, 54.8% at-risk (rural)</span>
+│
+├── client/
+│   ├── model.py              <span class="comment"># PyTorch MLP neural network</span>
+│   ├── database.py           <span class="comment"># Loads SQLite data into PyTorch tensors</span>
+│   └── client.py             <span class="comment"># FL client — trains, encrypts, sends update</span>
+│
+├── server/
+│   ├── strategy.py           <span class="comment"># PaillierFedAvg — aggregates encrypted updates</span>
+│   └── main.py               <span class="comment"># FastAPI server — REST API + simulation runner</span>
+│
+├── security/
+│   ├── crypto.py             <span class="comment"># Paillier homomorphic encryption</span>
+│   └── privacy.py            <span class="comment"># Differential Privacy via Opacus</span>
+│
+├── dashboard/src/            <span class="comment"># React 18 + Vite live dashboard</span>
+│   ├── App.jsx               <span class="comment"># Root component, polls API every 3s</span>
+│   └── components/           <span class="comment"># Charts, cards, config panel</span>
+│
+├── scripts/
+│   ├── generate_data.py      <span class="comment"># Creates school SQLite databases</span>
+│   ├── train_baseline.py     <span class="comment"># Centralised baseline for comparison</span>
+│   ├── privacy_accuracy_sweep.py  <span class="comment"># Generates privacy tradeoff chart</span>
+│   ├── generate_charts.py    <span class="comment"># Paper-quality PNG charts</span>
+│   └── precheck.py           <span class="comment"># Pre-presentation validation script</span>
+│
+└── results/
+    ├── baseline_metrics.json <span class="comment"># Centralised model performance</span>
+    └── privacy_accuracy_tradeoff.json  <span class="comment"># Sweep results for scatter chart</span>
+</pre>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 3 ===== -->
+<h2><span class="section-num">3</span>The Data Layer — <code>data/partitions/</code></h2>
+
+<h3>Script: <code>scripts/generate_data.py</code></h3>
+
+<p>This script creates synthetic but realistic student databases for each school. Each student record has 8 features and one target label:</p>
+
+<table>
+  <tr><th>Feature</th><th>Description</th></tr>
+  <tr><td><code>attendance_rate</code></td><td>Fraction of classes attended (0.0 – 1.0)</td></tr>
+  <tr><td><code>quiz_score</code></td><td>Average quiz score (0 – 100)</td></tr>
+  <tr><td><code>assignment_submission_rate</code></td><td>Fraction of assignments submitted</td></tr>
+  <tr><td><code>login_frequency</code></td><td>Average logins per week</td></tr>
+  <tr><td><code>days_since_last_activity</code></td><td>Days since last platform login</td></tr>
+  <tr><td><code>course_difficulty</code></td><td>Self-reported difficulty (1–5 scale)</td></tr>
+  <tr><td><code>prior_score</code></td><td>Previous term score (0–100)</td></tr>
+  <tr><td><code>engagement_index</code></td><td>Composite engagement score</td></tr>
+  <tr><td><code>at_risk</code></td><td><strong>Target:</strong> 1 = at-risk, 0 = not at-risk</td></tr>
+</table>
+
+<h3>Why Different At-Risk Rates?</h3>
+
+<div class="highlight">
+  This is the <strong>non-IID problem</strong> in federated learning. The data is NOT identically distributed across schools. A model trained only on school_alpha (1.5% at-risk) would perform poorly on school_gamma (54.8% at-risk). Federated learning must handle this diversity — that is one of the key research contributions of the project.
+</div>
+
+<table>
+  <tr><th>School</th><th>Type</th><th>Students</th><th>At-Risk %</th><th>Profile</th></tr>
+  <tr><td>school_alpha</td><td>Urban</td><td>600</td><td>1.5%</td><td>High attendance, high quiz scores</td></tr>
+  <tr><td>school_beta</td><td>Suburban</td><td>550</td><td>4.7%</td><td>Moderate performance</td></tr>
+  <tr><td>school_gamma</td><td>Rural</td><td>500</td><td>54.8%</td><td>Low attendance, low prior scores</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 4 ===== -->
+<h2><span class="section-num">4</span>The AI Model — <code>client/model.py</code></h2>
+
+<p>The prediction model is a <strong>Multi-Layer Perceptron (MLP)</strong> — a feedforward neural network with three layers:</p>
+
+<pre>
+Input (8 features)
+      ↓
+Linear(8 → 64) + ReLU activation
+      ↓
+Linear(64 → 32) + ReLU activation
+      ↓
+Linear(32 → 1) + Sigmoid activation
+      ↓
+Output: probability (0.0 – 1.0)
+If output ≥ 0.5 → student is AT-RISK
+If output &lt; 0.5 → student is NOT at-risk
+</pre>
+
+<h3>Training Details</h3>
+<ul>
+  <li><strong>Loss function:</strong> BCELoss (Binary Cross-Entropy) — standard for binary classification</li>
+  <li><strong>Optimizer:</strong> Adam with learning rate 0.01</li>
+  <li><strong>Local epochs:</strong> 3 per federated round (each school trains for 3 full passes over its data)</li>
+  <li><strong>Batch size:</strong> 32 students per gradient step</li>
+  <li><strong>Total parameters:</strong> 2,689 trainable weights</li>
+</ul>
+
+<div class="tip">
+  <strong>Why this model?</strong> It is small enough to train on a laptop CPU in seconds per round, while still being a genuine neural network. The focus of the project is the federated learning infrastructure, not the model architecture.
+</div>
+
+<h3>Evaluation Metrics</h3>
+<table>
+  <tr><th>Metric</th><th>What it measures</th><th>Target</th></tr>
+  <tr><td>F1-score (macro)</td><td>Balance of precision and recall across both classes</td><td>Within 5pp of baseline</td></tr>
+  <tr><td>Accuracy</td><td>Fraction of correct predictions</td><td>Higher is better</td></tr>
+  <tr><td>AUC-ROC</td><td>Model's ability to rank at-risk students above safe ones</td><td>Closer to 1.0 is better</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 5 ===== -->
+<h2><span class="section-num">5</span>Privacy Protection — <code>security/privacy.py</code></h2>
+
+<h3>What is Differential Privacy?</h3>
+
+<p>Differential Privacy (DP) is a mathematical guarantee that says: <em>"The output of this algorithm is nearly the same whether or not any single person's data is included."</em></p>
+
+<p>In practice, it works by adding carefully calibrated random noise to the gradients during training. This is called <strong>DP-SGD (Differentially Private Stochastic Gradient Descent)</strong>.</p>
+
+<h3>How it Works in the Code</h3>
+
+<pre>
+Standard training:
+  gradient = loss.backward()
+  optimizer.step(gradient)
+
+DP-SGD training:
+  1. Compute per-sample gradients (one gradient per student)
+  2. Clip each gradient to max_norm = 1.0
+     (prevents any one student from dominating the update)
+  3. Add Gaussian noise scaled by noise_multiplier = 1.1
+  4. Average the noisy clipped gradients
+  5. optimizer.step(noisy_gradient)
+</pre>
+
+<h3>Privacy Budget — Epsilon (ε)</h3>
+
+<div class="highlight">
+  <strong>Epsilon (ε)</strong> is the privacy budget. It measures how much privacy is spent. <br><br>
+  Lower ε = stronger privacy guarantee (but usually lower accuracy)<br>
+  Higher ε = weaker privacy guarantee (but usually higher accuracy)<br><br>
+  The project targets ε ≤ 3.0 per round with δ = 1×10⁻⁵
+</div>
+
+<h3>Key Parameters</h3>
+<table>
+  <tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr>
+  <tr><td>noise_multiplier (σ)</td><td>1.1</td><td>Amount of noise added. Higher = more private</td></tr>
+  <tr><td>max_grad_norm</td><td>1.0</td><td>Maximum gradient size. Clips outliers</td></tr>
+  <tr><td>delta (δ)</td><td>1×10⁻⁵</td><td>Probability of privacy failure. Must be very small</td></tr>
+</table>
+
+<div class="tip">
+  <strong>Implementation library:</strong> Opacus 1.4 by Meta (Facebook). It wraps the PyTorch model in a <code>GradSampleModule</code> that automatically computes per-sample gradients efficiently.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 6 ===== -->
+<h2><span class="section-num">6</span>Encryption — <code>security/crypto.py</code></h2>
+
+<h3>What is Paillier Homomorphic Encryption?</h3>
+
+<p><strong>Homomorphic encryption</strong> allows computations to be performed on encrypted data without decrypting it first. Paillier is a partial homomorphic encryption scheme that supports <strong>addition of encrypted values</strong>.</p>
+
+<pre>
+Normal encryption:
+  Encrypt(5) + Encrypt(3) requires decryption first
+
+Paillier encryption:
+  Encrypt(5) ⊕ Encrypt(3) = Encrypt(8)   ← addition works on ciphertext!
+  Decrypt(Encrypt(8)) = 8                 ← correct result
+</pre>
+
+<h3>Why This Matters for Federated Learning</h3>
+
+<div class="highlight">
+  Without encryption: the server receives each school's model update in plaintext and could potentially analyse it to learn about students.<br><br>
+  With Paillier encryption: the server receives encrypted updates, performs the weighted average <em>while encrypted</em>, and only decrypts the final combined result. Individual school updates are never visible to the server.
+</div>
+
+<h3>The Math — Weighted FedAvg in Encrypted Domain</h3>
+
+<pre>
+School alpha has 480 students, beta has 440, gamma has 400.
+Total = 1320 students.
+
+Weight_alpha = 480/1320 = 0.364
+Weight_beta  = 440/1320 = 0.333
+Weight_gamma = 400/1320 = 0.303
+
+Server computes (all encrypted):
+  result = Encrypt(update_alpha) × 0.364
+         + Encrypt(update_beta)  × 0.333
+         + Encrypt(update_gamma) × 0.303
+
+One decryption gives the correct weighted average.
+</pre>
+
+<h3>Key Sizes</h3>
+<table>
+  <tr><th>Key Size</th><th>Security</th><th>Speed</th><th>Use Case</th></tr>
+  <tr><td>512-bit</td><td>Low (demo only)</td><td>Fast (~2s/round)</td><td>Presentations and demos</td></tr>
+  <tr><td>1024-bit</td><td>Medium</td><td>Moderate</td><td>Testing</td></tr>
+  <tr><td>2048-bit</td><td>Production</td><td>Slow (~10min/round)</td><td>Real deployment</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 7 ===== -->
+<h2><span class="section-num">7</span>The FL Client — <code>client/client.py</code></h2>
+
+<p>This is the code that runs on each school's computer. It is a Flower <code>NumPyClient</code> — a standard interface that Flower uses to communicate with clients.</p>
+
+<h3>The <code>fit()</code> Method — Training Phase</h3>
+
+<pre>
+def fit(self, parameters, config):
+    <span class="comment"># 1. Check if school is toggled offline</span>
+    if get_client_status(school) == "Offline":
+        return [], 0, {}
+
+    <span class="comment"># 2. Load the global model weights from server</span>
+    set_flat_weights(self.model, parameters)
+    old_weights = get_flat_weights(self.model)
+
+    <span class="comment"># 3. Train locally with DP-SGD (3 epochs)</span>
+    for epoch in range(local_epochs):
+        for X_batch, y_batch in train_loader:
+            optimizer.zero_grad()
+            outputs = model(X_batch)
+            loss = criterion(outputs, y_batch)
+            loss.backward()
+            optimizer.step()   <span class="comment"># DP noise added here by Opacus</span>
+
+    <span class="comment"># 4. Compute the update (delta)</span>
+    new_weights = get_flat_weights(self.model)
+    update = new_weights - old_weights
+
+    <span class="comment"># 5. Encrypt the update with Paillier</span>
+    encrypted_update = encrypt_weights(public_key, update)
+
+    <span class="comment"># 6. Send encrypted update + metrics back to server</span>
+    return parameters, num_samples, {
+        "school_name": self.school_name,
+        "encrypted_update": serialize(encrypted_update),
+        "training_latency": elapsed_time,
+        "epsilon": privacy_budget_spent,
+    }
+</pre>
+
+<h3>The <code>evaluate()</code> Method — Evaluation Phase</h3>
+
+<p>After each round of aggregation, the server sends the updated global model back. Each school evaluates it on its <strong>local test set</strong> (20% of its data) and reports F1, accuracy, and AUC-ROC back to the server.</p>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 8 ===== -->
+<h2><span class="section-num">8</span>The FL Server Strategy — <code>server/strategy.py</code></h2>
+
+<h3>PaillierFedAvg Class</h3>
+
+<p>This is a custom implementation of the FedAvg algorithm that works with Paillier encrypted updates. It extends Flower's <code>Strategy</code> base class and overrides four methods:</p>
+
+<table>
+  <tr><th>Method</th><th>When Called</th><th>What it Does</th></tr>
+  <tr><td><code>configure_fit()</code></td><td>Start of each round</td><td>Generates Paillier keys (Round 1 only), sends global model + public key to all schools</td></tr>
+  <tr><td><code>aggregate_fit()</code></td><td>After all schools train</td><td>Receives encrypted updates, applies FedAvg weights homomorphically, decrypts result, updates global model</td></tr>
+  <tr><td><code>configure_evaluate()</code></td><td>After aggregation</td><td>Sends updated global model to all schools for evaluation</td></tr>
+  <tr><td><code>aggregate_evaluate()</code></td><td>After all schools evaluate</td><td>Averages F1, accuracy, AUC scores; logs to database; updates dashboard telemetry</td></tr>
+</table>
+
+<h3>Logging and Audit Trail</h3>
+
+<p>After every round, two records are written:</p>
+<ul>
+  <li><strong><code>logs/fl_metrics.db</code></strong> — SQLite table with round_id, node_id, F1, loss, accuracy, latency, comm_mb, epsilon for every school every round</li>
+  <li><strong><code>logs/crypto_audit.jsonl</code></strong> — JSON audit log recording whether encryption was enabled, key size, number of clients, and whether all updates were encrypted</li>
+</ul>
+
+<h3>Telemetry Dictionary</h3>
+
+<p>A Python dictionary called <code>telemetry_data</code> is shared between the strategy and the FastAPI server. The strategy writes to it after every round; the API reads it and sends it to the React dashboard every 3 seconds.</p>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 9 ===== -->
+<h2><span class="section-num">9</span>The API Server — <code>server/main.py</code></h2>
+
+<p>A <strong>FastAPI</strong> web server that runs on port 8000. It serves two purposes:</p>
+<ol>
+  <li>Provides a REST API that the React dashboard polls every 3 seconds for live updates</li>
+  <li>Manages and runs the FL simulation in a background thread</li>
+</ol>
+
+<h3>Key API Endpoints</h3>
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr>
+  <tr><td>GET</td><td><code>/api/telemetry</code></td><td>Returns all live metrics — round data, client statuses, config</td></tr>
+  <tr><td>POST</td><td><code>/api/start</code></td><td>Starts the FL simulation in a background thread</td></tr>
+  <tr><td>POST</td><td><code>/api/config</code></td><td>Updates simulation settings before starting</td></tr>
+  <tr><td>POST</td><td><code>/api/client/{name}/toggle</code></td><td>Toggles a school online/offline for the dropout demo</td></tr>
+  <tr><td>GET</td><td><code>/api/baseline</code></td><td>Returns centralised baseline F1/accuracy for comparison</td></tr>
+  <tr><td>GET</td><td><code>/api/privacy-sweep</code></td><td>Returns privacy-accuracy tradeoff data for scatter chart</td></tr>
+  <tr><td>GET</td><td><code>/api/metrics</code></td><td>Returns all historical round metrics from the database</td></tr>
+</table>
+
+<h3>How the Simulation is Started</h3>
+<pre>
+1. Dashboard sends POST /api/start
+2. FastAPI checks port 8088 is free
+3. Starts run_fl_simulation() as a background task
+4. run_fl_simulation():
+   a. Creates PaillierFedAvg strategy
+   b. Starts Flower gRPC server on port 8088 (separate thread)
+   c. Waits for port 8088 to be ready
+   d. Starts one client thread per online school
+   e. Waits for Flower server to finish all rounds
+   f. Marks simulation as complete
+</pre>
+
+<div class="tip">
+  <strong>Why threads?</strong> The Flower server and all school clients run in the same Python process but in separate threads. This simulates a real distributed system on a single machine for demonstration purposes.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 10 ===== -->
+<h2><span class="section-num">10</span>The React Dashboard — <code>dashboard/src/</code></h2>
+
+<p>A modern web dashboard built with React 18, Vite, and Chart.js. It polls the FastAPI server every 3 seconds and displays live metrics as the simulation runs.</p>
+
+<h3>Component Architecture</h3>
+<table>
+  <tr><th>Component</th><th>File</th><th>Purpose</th></tr>
+  <tr><td>App</td><td><code>App.jsx</code></td><td>Root — manages polling, tab state, passes data down</td></tr>
+  <tr><td>Header</td><td><code>Header.jsx</code></td><td>Shows Flower version, Paillier key size, DP status, Live/Idle</td></tr>
+  <tr><td>TabNav</td><td><code>TabNav.jsx</code></td><td>3-tab navigation: District View, School Admin, Configuration</td></tr>
+  <tr><td>StatusBanner</td><td><code>StatusBanner.jsx</code></td><td>Live progress bar — "Round X of Y completed, F1: 0.xxx"</td></tr>
+  <tr><td>MetricCards</td><td><code>MetricCards.jsx</code></td><td>6 stat cards — round, F1, accuracy, ε, comm overhead, nodes</td></tr>
+  <tr><td>ConvergenceChart</td><td><code>ConvergenceChart.jsx</code></td><td>Line chart — F1, accuracy, AUC-ROC, loss per round + baseline</td></tr>
+  <tr><td>CommOverheadChart</td><td><code>CommOverheadChart.jsx</code></td><td>Bar chart — MB transmitted per round</td></tr>
+  <tr><td>PrivacyAccuracyScatter</td><td><code>PrivacyAccuracyScatter.jsx</code></td><td>Scatter — epsilon vs F1 tradeoff from sweep</td></tr>
+  <tr><td>SchoolAdminView</td><td><code>SchoolAdminView.jsx</code></td><td>Per-school status cards with offline toggle button</td></tr>
+  <tr><td>ConfigPanel</td><td><code>ConfigPanel.jsx</code></td><td>Settings form — DP toggle, Paillier key size, rounds, epochs</td></tr>
+</table>
+
+<h3>Data Flow in the Dashboard</h3>
+<pre>
+FastAPI /api/telemetry (every 3s)
+         ↓
+App.jsx receives JSON → stores in state
+         ↓
+Passes telemetry as props to child components
+         ↓
+ConvergenceChart renders rounds array as line chart
+MetricCards reads last round for stat cards
+SchoolAdminView reads clients object for status cards
+</pre>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 11 ===== -->
+<h2><span class="section-num">11</span>Supporting Scripts — <code>scripts/</code></h2>
+
+<table>
+  <tr><th>Script</th><th>Command</th><th>Purpose</th></tr>
+  <tr><td>generate_data.py</td><td><code>python -m scripts.generate_data</code></td><td>Creates all 5 school SQLite databases with synthetic students</td></tr>
+  <tr><td>train_baseline.py</td><td><code>python -m scripts.train_baseline</code></td><td>Trains the model centrally on all schools combined — gives the benchmark F1/accuracy that federated must match</td></tr>
+  <tr><td>privacy_accuracy_sweep.py</td><td><code>python -m scripts.privacy_accuracy_sweep</code></td><td>Trains 8 times with different DP noise levels. Produces the privacy-accuracy tradeoff scatter chart data</td></tr>
+  <tr><td>generate_charts.py</td><td><code>python -m scripts.generate_charts</code></td><td>Generates 3 publication-quality PNG charts for the research report</td></tr>
+  <tr><td>generate_synthetic.py</td><td><code>python -m scripts.generate_synthetic --school school_alpha</code></td><td>Uses CTGAN deep learning to generate synthetic at-risk students for school_alpha (which has very few positive examples)</td></tr>
+  <tr><td>precheck.py</td><td><code>python -m scripts.precheck</code></td><td>Validates everything before a presentation — checks packages, data files, ports, source files, and results</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 12 ===== -->
+<h2><span class="section-num">12</span>How a Full Round Works — End-to-End Flow</h2>
+
+<div class="flow">
+  <strong>SERVER</strong>: Generates 512-bit Paillier key pair (once, Round 1 only)<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER → ALL SCHOOLS</strong>: Sends global model weights + public key<br>
+  <span class="arrow">↓</span><br>
+  <strong>EACH SCHOOL</strong>: Receives global model, loads weights into local MLP<br>
+  <span class="arrow">↓</span><br>
+  <strong>EACH SCHOOL</strong>: Trains for 3 epochs with DP-SGD (Opacus adds noise to gradients)<br>
+  <span class="arrow">↓</span><br>
+  <strong>EACH SCHOOL</strong>: Computes update = new_weights − old_weights (2,689 numbers)<br>
+  <span class="arrow">↓</span><br>
+  <strong>EACH SCHOOL</strong>: Encrypts update with Paillier public key → 2,689 ciphertexts<br>
+  <span class="arrow">↓</span><br>
+  <strong>ALL SCHOOLS → SERVER</strong>: Send encrypted updates + metrics (F1, epsilon, latency)<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER</strong>: Multiplies each encrypted update by its FedAvg weight (n_i / total)<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER</strong>: Adds all weighted encrypted updates homomorphically (no decryption needed)<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER</strong>: Decrypts once → gets weighted average model update<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER</strong>: Adds update to global model: global = global + avg_update<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER → ALL SCHOOLS</strong>: Sends updated global model for evaluation<br>
+  <span class="arrow">↓</span><br>
+  <strong>EACH SCHOOL</strong>: Evaluates on its 20% test set → reports F1, accuracy, AUC-ROC<br>
+  <span class="arrow">↓</span><br>
+  <strong>SERVER</strong>: Logs metrics to fl_metrics.db + crypto_audit.jsonl<br>
+  <span class="arrow">↓</span><br>
+  <strong>DASHBOARD</strong>: Polls /api/telemetry → updates charts and cards<br>
+  <span class="arrow">↓</span><br>
+  <strong>Repeat for next round…</strong>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 13 ===== -->
+<h2><span class="section-num">13</span>Likely Exam / Presentation Questions &amp; Answers</h2>
+
+<div class="qa">
+  <div class="q">Q: What is federated learning and why did you use it?</div>
+  <div class="a">Federated learning is a machine learning approach where a model is trained across multiple devices or servers without sharing raw data. We used it because student data is sensitive and protected by privacy regulations. Each Ghanaian school cannot legally send student records to a central server, but with federated learning, only model updates (not data) are shared, so the schools can collaboratively build a better model while keeping student data local.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is differential privacy and how does it protect students?</div>
+  <div class="a">Differential Privacy (DP) adds carefully calibrated mathematical noise to the model gradients during training. This provides a formal mathematical guarantee: the model update looks almost the same whether or not any individual student's data was included. Even if an attacker intercepts the model update, they cannot determine which specific student's record contributed to it. We use the Opacus library with a noise multiplier of σ=1.1 and clip gradients to max norm 1.0.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is Paillier encryption and why is it used here?</div>
+  <div class="a">Paillier is a partially homomorphic encryption scheme. Its key property is that you can ADD two encrypted numbers together without decrypting them. We use this so the server can compute the weighted average of all school model updates while they remain encrypted. The server only decrypts the final combined result, so it never sees any individual school's raw model update. This adds a second layer of protection beyond differential privacy.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is FedAvg and how does your system implement it?</div>
+  <div class="a">FedAvg (Federated Averaging) is the aggregation algorithm that combines multiple clients' model updates into one global model. Each client's update is weighted by how many training samples it contributed: weight_i = n_i / total_samples. Our implementation, PaillierFedAvg, applies these weights inside the encrypted domain using Paillier's scalar multiplication property before the homomorphic sum. This means the weighting and aggregation happen without decryption.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is the baseline and why does it matter?</div>
+  <div class="a">The centralised baseline is what you get if you ignore privacy completely and train one model on all three schools' data combined. We train this using scripts/train_baseline.py. Our federated model should reach within 5 percentage points (5pp) of this baseline F1-score. This proves that the federated approach, with all its privacy protections, is nearly as accurate as the privacy-violating centralised approach.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is the non-IID problem and how does your project demonstrate it?</div>
+  <div class="a">IID means "identically and independently distributed." In standard machine learning, all data is assumed to come from the same distribution. In federated learning, each client has its own data that may be very different. School_alpha has only 1.5% at-risk students while school_gamma has 54.8%. This is a non-IID distribution. Our project deliberately creates this scenario to show that FedAvg can still produce a useful global model despite these differences.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is epsilon (ε) in differential privacy?</div>
+  <div class="a">Epsilon is the privacy budget — a measure of how much privacy is spent. Lower ε means stronger privacy. A value of ε=1 means the model update reveals almost nothing about any individual. Higher ε means weaker guarantees. Our privacy-accuracy sweep shows that as ε decreases (stronger privacy, higher noise), F1-score also decreases slightly — this is the fundamental privacy-accuracy tradeoff. The project targets ε ≤ 3.0 per round.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: Why does the dashboard show the Flower framework?</div>
+  <div class="a">Flower (flwr) is the federated learning framework we use to handle the communication between the server and school clients. It provides the gRPC communication protocol, the client manager, the round scheduling, and the Strategy interface that we override with our PaillierFedAvg implementation. Flower runs on port 8088 while our FastAPI dashboard API runs on port 8000.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What happens if a school goes offline during training?</div>
+  <div class="a">This is the node dropout scenario we demonstrate live. When a school is toggled offline via the dashboard, its client thread does not connect to the Flower server for that round. The server's configure_fit() method uses client_manager.num_available() to sample only however many clients are actually connected, with a minimum of 1. Training continues with the remaining schools. The offline school's last-known status is preserved. This shows the resilience of federated learning to network failures.</div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== SECTION 14 ===== -->
+<h2><span class="section-num">14</span>Startup Commands Cheatsheet</h2>
+
+<div class="warning">
+  <strong>Before every demo, run:</strong> <code>python -m scripts.precheck</code> — it validates everything automatically.
+</div>
+
+<h3>Daily Startup (3 steps)</h3>
+
+<pre>
+<span class="comment"># Terminal 1 — Start the FL server</span>
+cd C:\Users\user\Desktop\project12-fl-ghana
+.venv\Scripts\Activate.ps1
+python -m server.main
+
+<span class="comment"># Terminal 2 — Start the React dashboard</span>
+cd C:\Users\user\Desktop\project12-fl-ghana\dashboard
+npm run dev
+
+<span class="comment"># Browser — open the dashboard</span>
+http://localhost:3000
+</pre>
+
+<h3>One-Time Setup Commands (run once, not every time)</h3>
+<pre>
+<span class="comment"># Generate school databases</span>
+python -m scripts.generate_data
+
+<span class="comment"># Train the centralised baseline (needed for convergence chart)</span>
+python -m scripts.train_baseline
+
+<span class="comment"># Generate privacy-accuracy sweep (takes ~10 minutes)</span>
+python -m scripts.privacy_accuracy_sweep
+
+<span class="comment"># Generate paper charts for report</span>
+python -m scripts.generate_charts
+</pre>
+
+<h3>Recommended Demo Configuration</h3>
+<table>
+  <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+  <tr><td>Paillier Key Size</td><td>512-bit</td><td>Fast enough for live demo (&lt;1 min/round)</td></tr>
+  <tr><td>Total FL Rounds</td><td>10</td><td>Shows convergence curve clearly</td></tr>
+  <tr><td>Differential Privacy</td><td>ON</td><td>Demonstrates DP-SGD feature</td></tr>
+  <tr><td>Paillier Encryption</td><td>ON</td><td>Demonstrates homomorphic encryption</td></tr>
+  <tr><td>Local Epochs</td><td>3</td><td>Default, good balance of speed and accuracy</td></tr>
+</table>
+
+<h3>Push Latest Code to GitHub</h3>
+<pre>
+git add -A
+git commit -m "your message here"
+git push origin develop
+</pre>
+
+<br><br>
+<p style="text-align:center; color:#9ca3af; font-size:12px;">
+  Cross-School Federated Learning — Group 7 — Project Study Guide<br>
+  Generated for presentation preparation
+</p>
+
+</div>
+</body>
+</html>

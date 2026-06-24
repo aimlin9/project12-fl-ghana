@@ -90,9 +90,13 @@ def train_baseline():
     train_ds = torch.utils.data.TensorDataset(X_train_t, y_train_t)
     train_loader = torch.utils.data.DataLoader(train_ds, batch_size=32, shuffle=True)
 
+    num_pos = float(y_train_t.sum())
+    num_neg = float(len(y_train_t) - num_pos)
+    pos_weight = torch.tensor([num_neg / max(num_pos, 1.0)])
+
     model = get_model()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    criterion = torch.nn.BCELoss()
+    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # 50 FL rounds × 3 local epochs per round = 150 total epochs
     total_epochs = 50 * 3
@@ -110,9 +114,9 @@ def train_baseline():
         if (epoch + 1) % 30 == 0 or epoch == 0:
             model.eval()
             with torch.no_grad():
-                preds = model(X_test_t)
-                test_loss = criterion(preds, y_test_t).item()
-                pred_labels = (preds >= 0.5).float().numpy()
+                logits = model(X_test_t)
+                test_loss = criterion(logits, y_test_t).item()
+                pred_labels = (torch.sigmoid(logits) >= 0.5).float().numpy()
                 f1 = f1_score(y_test, pred_labels, average="macro", zero_division=0)
                 acc = accuracy_score(y_test, pred_labels)
             print(f"  Epoch {epoch+1:>3}/{total_epochs} — Loss: {test_loss:.4f}  Acc: {acc:.4f}  F1: {f1:.4f}")
@@ -120,9 +124,9 @@ def train_baseline():
     # Final evaluation
     model.eval()
     with torch.no_grad():
-        preds = model(X_test_t)
-        pred_probs = preds.numpy()
-        pred_labels = (preds >= 0.5).float().numpy()
+        logits = model(X_test_t)
+        pred_probs = torch.sigmoid(logits).numpy()
+        pred_labels = (pred_probs >= 0.5).astype(float)
 
     f1 = f1_score(y_test, pred_labels, average="macro", zero_division=0)
     acc = accuracy_score(y_test, pred_labels)
@@ -141,7 +145,7 @@ def train_baseline():
     os.makedirs("results", exist_ok=True)
     results = {
         "model": "StudentMLP",
-        "architecture": "8 -> 64 (ReLU) -> 32 (ReLU) -> 1 (Sigmoid)",
+        "architecture": "8 -> 64 (ReLU) -> 32 (ReLU) -> 1 (logit, BCEWithLogitsLoss)",
         "train_samples": int(len(X_train)),
         "test_samples": int(len(X_test)),
         "total_epochs": total_epochs,

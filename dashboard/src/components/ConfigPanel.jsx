@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './ConfigPanel.module.css'
 
-export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
+export default function ConfigPanel({ telemetry, onSave, onStart, onStop, running }) {
   const cfg = telemetry?.config ?? {}
   const initialized = useRef(false)
 
@@ -10,9 +10,11 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
     use_paillier:      'True',
     local_epochs:      3,
     lr:                0.01,
-    total_rounds:      50,
+    total_rounds:      10,
     num_nodes:         3,
-    paillier_key_bits: 2048,
+    paillier_key_bits: 1024,
+    noise_multiplier:  1.1,
+    max_grad_norm:     1.0,
   })
 
   useEffect(() => {
@@ -22,9 +24,11 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
         use_paillier:      cfg.use_paillier      ?? 'True',
         local_epochs:      cfg.local_epochs      ?? 3,
         lr:                cfg.lr                ?? 0.01,
-        total_rounds:      cfg.total_rounds      ?? 50,
+        total_rounds:      cfg.total_rounds      ?? 10,
         num_nodes:         cfg.num_nodes         ?? 3,
         paillier_key_bits: cfg.paillier_key_bits ?? 2048,
+        noise_multiplier:  cfg.noise_multiplier  ?? 1.1,
+        max_grad_norm:     cfg.max_grad_norm     ?? 1.0,
       })
       initialized.current = true
     }
@@ -40,6 +44,8 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
     total_rounds:      Number(form.total_rounds),
     num_nodes:         Number(form.num_nodes),
     paillier_key_bits: Number(form.paillier_key_bits),
+    noise_multiplier:  Number(form.noise_multiplier),
+    max_grad_norm:     Number(form.max_grad_norm),
   })
 
   return (
@@ -123,6 +129,28 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
           />
         </div>
 
+        <div className={styles.field}>
+          <label>DP Noise Multiplier (σ) — higher = more private</label>
+          <input
+            type="number" step="0.1" min={0.1} max={5}
+            value={form.noise_multiplier}
+            onChange={e => set('noise_multiplier', e.target.value)}
+            disabled={running}
+            className={styles.input}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label>Max Gradient Norm — gradient clipping threshold</label>
+          <input
+            type="number" step="0.1" min={0.1} max={10}
+            value={form.max_grad_norm}
+            onChange={e => set('max_grad_norm', e.target.value)}
+            disabled={running}
+            className={styles.input}
+          />
+        </div>
+
         <button className={styles.btnSave} onClick={handleSave} disabled={running}>
           Save Configuration
         </button>
@@ -139,8 +167,8 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
         </div>
 
         <div className={styles.infoBox}>
-          <div className={styles.infoRow}><span>DP Noise σ</span><span>1.1 (Opacus 1.4)</span></div>
-          <div className={styles.infoRow}><span>Max Grad Norm</span><span>1.0</span></div>
+          <div className={styles.infoRow}><span>DP Noise σ</span><span>{form.noise_multiplier} (Opacus 1.4)</span></div>
+          <div className={styles.infoRow}><span>Max Grad Norm</span><span>{form.max_grad_norm}</span></div>
           <div className={styles.infoRow}><span>Key Size</span><span>{form.paillier_key_bits}-bit Paillier</span></div>
           <div className={styles.infoRow}><span>Target ε / round</span><span>≤ 3.0 (δ=1e-5)</span></div>
           <div className={styles.infoRow}><span>FL Framework</span><span>Flower 1.8.0</span></div>
@@ -154,6 +182,25 @@ export default function ConfigPanel({ telemetry, onSave, onStart, running }) {
         >
           {running ? 'Simulation Running…' : '▶ Start FL Simulation'}
         </button>
+
+        {running && (
+          <button
+            onClick={onStop}
+            style={{
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              color: '#fca5a5',
+              borderRadius: '0.5rem',
+              padding: '0.65rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              width: '100%',
+              cursor: 'pointer',
+            }}
+          >
+            ■ Stop Simulation
+          </button>
+        )}
 
         <p className={styles.note}>
           Proposal target: federated F1 within 5 pp of centralised baseline after {form.total_rounds} rounds.

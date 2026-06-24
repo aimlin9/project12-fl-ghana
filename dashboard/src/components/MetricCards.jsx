@@ -10,7 +10,7 @@ function Card({ label, value, sub, color }) {
   )
 }
 
-export default function MetricCards({ rounds, last, clients, config }) {
+export default function MetricCards({ rounds, last, clients, config, liveAccuracy, running }) {
   const totalRounds    = rounds.length
   const configRounds   = config?.total_rounds ?? 50
   const activeClients  = Object.values(clients).filter(c => c.status === 'Active').length
@@ -32,9 +32,13 @@ export default function MetricCards({ rounds, last, clients, config }) {
         color="#10b981"
       />
       <Card
-        label="Accuracy"
-        value={last.accuracy != null ? (last.accuracy * 100).toFixed(1) + '%' : '—'}
-        sub={`AUC: ${last.auc_roc != null ? last.auc_roc.toFixed(3) : '—'}`}
+        label="Balanced Accuracy"
+        value={
+          running && liveAccuracy != null
+            ? (liveAccuracy * 100).toFixed(1) + '%'
+            : last.accuracy != null ? (last.accuracy * 100).toFixed(1) + '%' : '—'
+        }
+        sub={running && liveAccuracy != null ? 'training in progress…' : `AUC: ${last.auc_roc != null ? last.auc_roc.toFixed(3) : '—'}`}
         color="#a855f7"
       />
       <Card

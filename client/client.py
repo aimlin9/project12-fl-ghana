@@ -4,7 +4,7 @@ import numpy as np
 import json
 import time
 import urllib.request
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score, balanced_accuracy_score, roc_curve
 
 from client.model import get_model
 from client.database import load_data
@@ -47,14 +47,43 @@ class StudentFLClient(fl.client.NumPyClient):
         self.school_name = school_name
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = get_model().to(self.device)
-        self.train_loader, self.test_loader, self.num_train, self.num_test = load_data(
+        self.train_loader, self.test_loader, self.num_train, self.num_test, pos_w = load_data(
             school_name, db_dir=db_dir, batch_size=batch_size
         )
+        self.pos_weight = torch.tensor([pos_w], dtype=torch.float32)
         # Track whether the model has already been wrapped by Opacus
         self._dp_wrapped = False
         self._privacy_engine = None
         self._dp_train_loader = None   # Opacus Poisson-sampled loader (saved after Round 1)
         print(f"[{self.school_name}] Initialized with {self.num_train} train / {self.num_test} test samples.")
+
+    def _post_epoch_accuracy(self):
+        """Evaluate on test set after each epoch and POST result to dashboard."""
+        probs_list, targets_list = [], []
+        with torch.no_grad():
+            for X_b, y_b in self.test_loader:
+                logits = self.model(X_b.to(self.device))
+                probs = torch.sigmoid(logits).squeeze(1).cpu().numpy()
+                probs_list.extend(probs.tolist())
+                targets_list.extend(y_b.squeeze(1).numpy().tolist())
+        targets_arr = np.array(targets_list)
+        probs_arr   = np.array(probs_list)
+        if len(np.unique(targets_arr)) > 1:
+            fpr, tpr, thresh = roc_curve(targets_arr, probs_arr)
+            threshold = float(thresh[int(np.argmax(tpr - fpr))])
+        else:
+            threshold = 0.25
+        preds = (probs_arr >= threshold).tolist()
+        acc = float(balanced_accuracy_score(targets_arr, preds))
+        try:
+            data = json.dumps({"accuracy": acc, "school": self.school_name}).encode()
+            req = urllib.request.Request(
+                "http://127.0.0.1:8000/api/progress", data=data,
+                headers={"Content-Type": "application/json"}, method="POST"
+            )
+            urllib.request.urlopen(req, timeout=0.5)
+        except Exception:
+            pass
 
     def get_parameters(self, config):
         return [p.detach().cpu().numpy() for p in self.model.parameters()]
@@ -81,7 +110,7 @@ class StudentFLClient(fl.client.NumPyClient):
 
         self.model.train()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        criterion = torch.nn.BCELoss()
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(self.device))
 
         if use_dp:
             if not self._dp_wrapped:
@@ -123,6 +152,7 @@ class StudentFLClient(fl.client.NumPyClient):
                 loss = criterion(outputs, y_batch)
                 loss.backward()
                 optimizer.step()
+            self._post_epoch_accuracy()
 
         training_latency = time.perf_counter() - start_time
 
@@ -162,38 +192,43 @@ class StudentFLClient(fl.client.NumPyClient):
         set_flat_weights(self.model, flat_global)
 
         self.model.eval()
-        criterion = torch.nn.BCELoss()
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(self.device))
 
         total_loss = 0.0
         all_probs   = []
-        all_preds   = []
         all_targets = []
 
         with torch.no_grad():
             for X_batch, y_batch in self.test_loader:
                 X_batch = X_batch.to(self.device)
                 y_batch = y_batch.to(self.device)
-                outputs = self.model(X_batch)       # shape (batch, 1)
-                loss = criterion(outputs, y_batch)
+                logits = self.model(X_batch)                          # raw logit, shape (batch, 1)
+                loss = criterion(logits, y_batch)
                 total_loss += loss.item() * len(X_batch)
 
-                # Squeeze to 1-D before collecting
-                probs  = outputs.squeeze(1).cpu().numpy()        # (batch,)
-                preds  = (probs >= 0.5).astype(float)            # (batch,)
-                labels = y_batch.squeeze(1).cpu().numpy()        # (batch,)
+                # Apply sigmoid to convert logit → probability
+                probs  = torch.sigmoid(logits).squeeze(1).cpu().numpy()   # (batch,)
+                labels = y_batch.squeeze(1).cpu().numpy()                  # (batch,)
 
                 all_probs.extend(probs.tolist())
-                all_preds.extend(preds.tolist())
                 all_targets.extend(labels.tolist())
 
         num_test = max(self.num_test, len(all_targets))
         avg_loss = total_loss / num_test if num_test > 0 else 0.0
 
-        all_preds   = np.array(all_preds)
         all_targets = np.array(all_targets)
         all_probs   = np.array(all_probs)
 
-        accuracy = float(np.mean(all_preds == all_targets))
+        # Find optimal threshold via Youden's J (maximises sensitivity + specificity)
+        if len(np.unique(all_targets)) > 1:
+            fpr, tpr, thresholds = roc_curve(all_targets, all_probs)
+            optimal_idx = int(np.argmax(tpr - fpr))
+            threshold = float(thresholds[optimal_idx])
+        else:
+            threshold = 0.25
+        all_preds = (all_probs >= threshold).astype(float)
+
+        accuracy = float(balanced_accuracy_score(all_targets, all_preds))
         f1       = float(f1_score(all_targets, all_preds, average="macro", zero_division=0))
 
         try:

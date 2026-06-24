@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from typing import List, Tuple, Union, Dict, Optional
 from flwr.common import (
-    Parameters, FitRes, EvaluateRes, Scalar, ndarrays_to_parameters, parameters_to_ndarrays
+    Parameters, FitRes, EvaluateRes, Scalar, ndarrays_to_parameters
 )
 from flwr.server.client_proxy import ClientProxy
 
@@ -75,11 +75,15 @@ telemetry_data = {
         "use_paillier": "True",
         "local_epochs": 3,
         "lr": 0.01,
-        "total_rounds": 50,
+        "total_rounds": 10,
         "num_nodes": 3,
-        "paillier_key_bits": 2048,
+        "paillier_key_bits": 1024,
+        "noise_multiplier": 1.1,
+        "max_grad_norm": 1.0,
     },
     "simulation_running": False,
+    "live_accuracy": None,
+    "_stop_requested": False,
 }
 
 
@@ -148,6 +152,10 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         return ndarrays_to_parameters(ndarrays)
 
     def configure_fit(self, server_round: int, parameters: Parameters, client_manager) -> List[Tuple[ClientProxy, fl.common.FitIns]]:
+        if telemetry_data.get("_stop_requested"):
+            telemetry_data["simulation_running"] = False
+            raise RuntimeError("Simulation stopped by user.")
+
         self.current_round = server_round
 
         if self.public_key is None and telemetry_data["config"]["use_paillier"] == "True":
@@ -157,12 +165,12 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
             print(f"[Server Strategy] Key pair generated in {time.perf_counter() - start:.2f}s")
 
         config = {
-            "use_dp":         telemetry_data["config"]["use_dp"],
-            "use_paillier":   telemetry_data["config"]["use_paillier"],
-            "local_epochs":   str(telemetry_data["config"]["local_epochs"]),
-            "lr":             str(telemetry_data["config"]["lr"]),
-            "dp_noise_multiplier": "1.1",
-            "dp_max_grad_norm":    "1.0",
+            "use_dp":              telemetry_data["config"]["use_dp"],
+            "use_paillier":        telemetry_data["config"]["use_paillier"],
+            "local_epochs":        str(telemetry_data["config"]["local_epochs"]),
+            "lr":                  str(telemetry_data["config"]["lr"]),
+            "dp_noise_multiplier": str(telemetry_data["config"]["noise_multiplier"]),
+            "dp_max_grad_norm":    str(telemetry_data["config"]["max_grad_norm"]),
         }
 
         if telemetry_data["config"]["use_paillier"] == "True":
@@ -352,6 +360,7 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         auc_roc_scores = []
 
         round_metrics = telemetry_data.get("last_round_metrics", {})
+        round_metrics.setdefault("round", server_round)
         comm_mb = round_metrics.get("comm_overhead_mb", 0.0)
         max_epsilon = round_metrics.get("max_epsilon", 0.0)
 
@@ -392,6 +401,8 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         round_metrics["f1_score"] = avg_f1
         round_metrics["auc_roc"] = avg_auc
         telemetry_data["rounds"].append(round_metrics)
+        telemetry_data["live_accuracy"] = None
+        telemetry_data["_live_per_school"] = {}
 
         return avg_loss, {"accuracy": avg_accuracy, "f1_score": avg_f1, "auc_roc": avg_auc}
 

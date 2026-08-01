@@ -186,8 +186,12 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         # Round 1 can race ahead of client gRPC registration: the TCP port accepts
         # connections before ClientManager.num_available() reflects registered clients,
         # so sampling immediately can select 0 clients and silently no-op the round.
-        # wait_for() blocks (briefly) until the expected client count has registered.
-        client_manager.wait_for(num_clients=max(online_count, 1), timeout=10)
+        # wait_for() blocks until the expected client count has registered (or times out).
+        # 30s headroom: with 5 nodes + DP/Paillier, each client thread has to load its
+        # SQLite partition, build its model, and (with DP) wrap it with Opacus before it
+        # even attempts to register — under load this measurably exceeded 10s in testing.
+        # This only costs time in the worst case; once registered, wait_for returns immediately.
+        client_manager.wait_for(num_clients=max(online_count, 1), timeout=30)
 
         available = client_manager.num_available()
         sample_count = min(available, max(online_count, 1))

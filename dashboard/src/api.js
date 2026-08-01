@@ -37,16 +37,6 @@ export async function toggleClient(schoolName) {
   return res.json()
 }
 
-export async function fetchPrivacyAccuracy() {
-  try {
-    const res = await fetch('/results/privacy_accuracy_tradeoff.json')
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
-
 export async function fetchBaseline() {
   try {
     const res = await fetch(`${BASE}/baseline`)

@@ -115,11 +115,30 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Step 3 — Generate school data partitions
+### Step 3 — Download OULAD and generate school data partitions
 ```bash
+# One-time: download the real OULAD dataset (~45MB zip, extracts to ~500MB of CSVs)
+python scripts/download_oulad.py
+
+# Partition into school nodes by real student registration quarter
 python scripts/partition_oulad.py --nodes 3 --output data/partitions/
-# Use --nodes 5 for the full 5-school configuration
+# Use --nodes 4 or --nodes 5 for the larger configurations
+
+# Fast dev/demo fallback — fully synthetic data, no OULAD download required
+python scripts/partition_oulad.py --nodes 3 --output data/partitions/ --synthetic
 ```
+OULAD has exactly 4 real registration quarters (`code_presentation`): `2013B`, `2013J`,
+`2014B`, `2014J`. These map to school nodes as follows:
+
+| `--nodes` | Mapping |
+|---|---|
+| 3 | alpha=2013B, beta=2013J, gamma=2014B (2014J held in reserve) |
+| 4 | alpha=2013B, beta=2013J, gamma=2014B, delta=2014J — 1:1 quarter mapping |
+| 5 | same as 4, plus `2014J` (the largest quarter, 11,260 students) split by `code_module` group into delta/epsilon, since OULAD only has 4 real quarters, not 5 |
+
+See `scripts/oulad_features.py` for the full OULAD → 8-feature mapping (attendance,
+quiz score, etc. are engineered proxies from VLE click logs and assessment records,
+since OULAD has no literal "attendance" or "difficulty" field).
 
 ### Step 4 — Docker multi-node simulation (optional)
 ```bash

@@ -18,6 +18,7 @@ import socket
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import torch
 import flwr as fl
 from server.strategy import PaillierFedAvg, SCHOOL_NAMES_ALL, telemetry_data, _build_default_clients
 
@@ -34,7 +35,8 @@ def wait_for_port(host, port, max_wait=10.0):
     return False
 
 
-def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=2048):
+def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=2048, seed=42):
+    torch.manual_seed(seed)  # controls initial model weights, matching the seed used for the data split
     school_names = SCHOOL_NAMES_ALL[:nodes]
     print(f"\n[FL] Starting simulation — rounds={rounds}, nodes={nodes}, "
           f"dp={use_dp}, paillier={use_paillier}, lr={lr}, epochs={epochs}")
@@ -80,7 +82,7 @@ def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=204
     def run_client(school_name):
         try:
             from client.client import StudentFLClient
-            client = StudentFLClient(school_name)
+            client = StudentFLClient(school_name, seed=seed)
             fl.client.start_numpy_client(server_address="127.0.0.1:8088", client=client)
         except Exception as exc:
             print(f"[FL CLIENT ERROR — {school_name}] {exc}")
@@ -103,6 +105,8 @@ def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=204
         print(f"     Accuracy: {last.get('accuracy', 'N/A')}")
         print(f"     AUC-ROC:  {last.get('auc_roc', 'N/A')}")
         print(f"     Comm(MB): {last.get('comm_overhead_mb', 'N/A')}")
+        return last
+    return None
 
 
 def main():

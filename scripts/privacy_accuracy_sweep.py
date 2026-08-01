@@ -73,7 +73,7 @@ def run_sweep(school="school_alpha", num_rounds=10, local_epochs=3, lr=0.01, del
 
     results = []
     print(f"\nPrivacy-Accuracy sweep on {school} — {num_rounds} rounds × {local_epochs} epochs\n")
-    print(f"{'Noise σ':>10}  {'Epsilon':>10}  {'Accuracy':>10}  {'F1 (macro)':>12}  {'AUC-ROC':>10}")
+    print(f"{'Noise sd':>10}  {'Epsilon':>10}  {'Accuracy':>10}  {'F1 (macro)':>12}  {'AUC-ROC':>10}")
     print("-" * 60)
 
     for noise_mult in NOISE_MULTIPLIERS:
@@ -138,7 +138,7 @@ def main():
     with open(out_path, "w") as f:
         json.dump({"sweep": results}, f, indent=2)
 
-    print(f"\nResults saved → {out_path}")
+    print(f"\nResults saved -> {out_path}")
     print("Use this data for the privacy-accuracy scatter plot (Proposal E1, Visual #3).")
 
 

@@ -77,7 +77,7 @@ telemetry_data = {
         "lr": 0.01,
         "total_rounds": 10,
         "num_nodes": 3,
-        "paillier_key_bits": 1024,
+        "paillier_key_bits": 2048,
         "noise_multiplier": 1.1,
         "max_grad_norm": 1.0,
     },
@@ -179,11 +179,17 @@ class PaillierFedAvg(fl.server.strategy.Strategy):
         params = ndarrays_to_parameters(_global_weights_to_ndarrays(self.model, self.global_weights))
         fit_ins = fl.common.FitIns(params, config)
 
-        available = client_manager.num_available()
         online_count = sum(
             1 for info in telemetry_data["clients"].values()
             if info.get("status") != "Offline"
         )
+        # Round 1 can race ahead of client gRPC registration: the TCP port accepts
+        # connections before ClientManager.num_available() reflects registered clients,
+        # so sampling immediately can select 0 clients and silently no-op the round.
+        # wait_for() blocks (briefly) until the expected client count has registered.
+        client_manager.wait_for(num_clients=max(online_count, 1), timeout=10)
+
+        available = client_manager.num_available()
         sample_count = min(available, max(online_count, 1))
         clients = client_manager.sample(
             num_clients=sample_count,

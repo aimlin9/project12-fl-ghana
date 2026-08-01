@@ -1,10 +1,16 @@
 """
-Simulated School Data Generator
-================================
-Generates non-IID student performance SQLite databases for each school node.
-Supports 3–5 school configurations with distinct demographic profiles.
+Simulated School Data Generator — SYNTHETIC FALLBACK ONLY
+============================================================
+Generates non-IID student performance SQLite databases from a hand-written
+logistic formula (no real student data). This is the fast dev/demo fallback
+used by `scripts/partition_oulad.py --synthetic` when you want to iterate
+without downloading the real OULAD dataset.
 
-Usage:
+For the real evaluation data required by the proposal (D2/D4/Obj.1), use:
+    python scripts/download_oulad.py
+    python scripts/partition_oulad.py --nodes 3 --output data/partitions/
+
+Usage (standalone):
     python scripts/generate_data.py
 """
 import os

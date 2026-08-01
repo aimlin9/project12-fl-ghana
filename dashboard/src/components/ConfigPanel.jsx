@@ -12,7 +12,7 @@ export default function ConfigPanel({ telemetry, onSave, onStart, onStop, runnin
     lr:                0.01,
     total_rounds:      10,
     num_nodes:         3,
-    paillier_key_bits: 1024,
+    paillier_key_bits: 2048,
     noise_multiplier:  1.1,
     max_grad_norm:     1.0,
   })

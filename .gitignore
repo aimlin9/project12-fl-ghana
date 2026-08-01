@@ -36,3 +36,4 @@ htmlcov/
 .env.local
 logs/
 results/
+data/oulad_raw/

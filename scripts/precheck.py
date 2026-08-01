@@ -104,11 +104,12 @@ def check_data(fix=False):
         db_path = os.path.join(parts_dir, f"{school}.db")
         if not os.path.exists(db_path):
             ok = check(f"{school}.db exists", False,
-                       "missing — run: python scripts/generate_data.py")
+                       "missing — run: python scripts/download_oulad.py && "
+                       "python scripts/partition_oulad.py --nodes 3")
             if fix and not ok:
-                print(f"         Auto-generating {school}...")
-                subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "generate_data.py")],
-                               cwd=ROOT, check=False)
+                print(f"         Auto-partitioning real OULAD data for {school}...")
+                subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "partition_oulad.py"),
+                                "--nodes", "3"], cwd=ROOT, check=False)
             continue
 
         try:

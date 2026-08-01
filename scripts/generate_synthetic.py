@@ -63,7 +63,7 @@ def save_synthetic(synthetic_df, school_name, output_dir="data/synthetic"):
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, f"SYNTHETIC_{school_name}.csv")
     synthetic_df.to_csv(out_path, index=False)
-    print(f"  Saved {len(synthetic_df)} synthetic records → {out_path}")
+    print(f"  Saved {len(synthetic_df)} synthetic records -> {out_path}")
     return out_path
 
 
@@ -139,7 +139,7 @@ def main():
     print(f"\n{'=' * 55}")
     print("Summary:")
     for school, status in results.items():
-        print(f"  {school:30s} → {status}")
+        print(f"  {school:30s} -> {status}")
 
 
 if __name__ == "__main__":

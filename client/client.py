@@ -43,12 +43,12 @@ def get_client_status(school_name):
 
 
 class StudentFLClient(fl.client.NumPyClient):
-    def __init__(self, school_name, db_dir="data/partitions", batch_size=32):
+    def __init__(self, school_name, db_dir="data/partitions", batch_size=32, seed=42):
         self.school_name = school_name
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = get_model().to(self.device)
         self.train_loader, self.test_loader, self.num_train, self.num_test, pos_w = load_data(
-            school_name, db_dir=db_dir, batch_size=batch_size
+            school_name, db_dir=db_dir, batch_size=batch_size, seed=seed
         )
         self.pos_weight = torch.tensor([pos_w], dtype=torch.float32)
         # Track whether the model has already been wrapped by Opacus

@@ -76,7 +76,7 @@ def save(fig, name, dpi):
     os.makedirs(CHARTS_DIR, exist_ok=True)
     path = os.path.join(CHARTS_DIR, name)
     fig.savefig(path, dpi=dpi, bbox_inches="tight", facecolor=fig.get_facecolor())
-    print(f"  Saved → {path}")
+    print(f"  Saved -> {path}")
     plt.close(fig)
 
 

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-def load_data(school_name, db_dir="data/partitions", batch_size=32, test_split=0.2):
+def load_data(school_name, db_dir="data/partitions", batch_size=32, test_split=0.2, seed=42):
     db_path = f"{db_dir}/{school_name}.db"
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -47,7 +47,7 @@ def load_data(school_name, db_dir="data/partitions", batch_size=32, test_split=0
     # Shuffle and Split into train/test
     num_samples = len(X)
     indices = np.arange(num_samples)
-    np.random.seed(42)
+    np.random.seed(seed)
     np.random.shuffle(indices)
     
     X = X[indices]

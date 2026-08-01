@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from client.model import get_model
 
 
-def load_all_data(db_dir="data/partitions", test_split=0.2):
+def load_all_data(db_dir="data/partitions", test_split=0.2, seed=42):
     """Load and pool data from all school SQLite databases."""
     all_X = []
     all_y = []
@@ -63,7 +63,7 @@ def load_all_data(db_dir="data/partitions", test_split=0.2):
     y = np.concatenate(all_y)
 
     # Shuffle with fixed seed for reproducibility
-    np.random.seed(42)
+    np.random.seed(seed)
     indices = np.arange(len(X))
     np.random.shuffle(indices)
     X, y = X[indices], y[indices]
@@ -72,14 +72,22 @@ def load_all_data(db_dir="data/partitions", test_split=0.2):
     return X[:split], y[:split], X[split:], y[split:]
 
 
-def train_baseline():
-    """Train centralised baseline and save results."""
-    print("=" * 60)
-    print("CENTRALISED BASELINE TRAINING")
-    print("=" * 60)
+def train_baseline(seed=42, save=True, verbose=True):
+    """Train centralised baseline and save results.
 
-    X_train, y_train, X_test, y_test = load_all_data()
-    print(f"\nPooled dataset: {len(X_train)} train, {len(X_test)} test samples")
+    seed controls both the train/test shuffle and Adam/init randomness elsewhere
+    in the run — used by scripts/statistical_comparison.py to produce independent
+    (centralised, federated) F1 pairs for the paired significance test.
+    """
+    if verbose:
+        print("=" * 60)
+        print("CENTRALISED BASELINE TRAINING")
+        print("=" * 60)
+
+    torch.manual_seed(seed)
+    X_train, y_train, X_test, y_test = load_all_data(seed=seed)
+    if verbose:
+        print(f"\nPooled dataset: {len(X_train)} train, {len(X_test)} test samples")
 
     # Convert to tensors
     X_train_t = torch.tensor(X_train)
@@ -100,7 +108,8 @@ def train_baseline():
 
     # 50 FL rounds × 3 local epochs per round = 150 total epochs
     total_epochs = 50 * 3
-    print(f"\nTraining for {total_epochs} epochs (50 rounds × 3 local epochs)...\n")
+    if verbose:
+        print(f"\nTraining for {total_epochs} epochs (50 rounds × 3 local epochs)...\n")
 
     for epoch in range(total_epochs):
         model.train()
@@ -111,7 +120,7 @@ def train_baseline():
             loss.backward()
             optimizer.step()
 
-        if (epoch + 1) % 30 == 0 or epoch == 0:
+        if verbose and ((epoch + 1) % 30 == 0 or epoch == 0):
             model.eval()
             with torch.no_grad():
                 logits = model(X_test_t)
@@ -135,17 +144,17 @@ def train_baseline():
     except ValueError:
         auc = 0.0
 
-    print(f"\n{'=' * 60}")
-    print(f"  F1-score (macro) : {f1:.4f}")
-    print(f"  Accuracy         : {acc:.4f}")
-    print(f"  AUC-ROC          : {auc:.4f}")
-    print(f"{'=' * 60}")
+    if verbose:
+        print(f"\n{'=' * 60}")
+        print(f"  F1-score (macro) : {f1:.4f}")
+        print(f"  Accuracy         : {acc:.4f}")
+        print(f"  AUC-ROC          : {auc:.4f}")
+        print(f"{'=' * 60}")
 
-    # Persist results
-    os.makedirs("results", exist_ok=True)
     results = {
         "model": "StudentMLP",
         "architecture": "8 -> 64 (ReLU) -> 32 (ReLU) -> 1 (logit, BCEWithLogitsLoss)",
+        "seed": seed,
         "train_samples": int(len(X_train)),
         "test_samples": int(len(X_test)),
         "total_epochs": total_epochs,
@@ -157,9 +166,14 @@ def train_baseline():
         "auc_roc": round(float(auc), 4),
     }
 
-    with open("results/baseline_metrics.json", "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"\nResults saved to results/baseline_metrics.json")
+    if save:
+        os.makedirs("results", exist_ok=True)
+        with open("results/baseline_metrics.json", "w") as f:
+            json.dump(results, f, indent=2)
+        if verbose:
+            print(f"\nResults saved to results/baseline_metrics.json")
+
+    return results
 
 
 if __name__ == "__main__":

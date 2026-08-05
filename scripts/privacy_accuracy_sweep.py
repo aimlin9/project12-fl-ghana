@@ -29,7 +29,10 @@ from security.privacy import make_private_training, get_privacy_spent
 
 # Noise multiplier → approximate epsilon after 50 rounds
 # Higher noise = more privacy (lower epsilon) but lower accuracy
-NOISE_MULTIPLIERS = [0.5, 0.8, 1.0, 1.1, 1.3, 1.5, 2.0, 3.0]
+# Extended past 3.0 (the original range) to actually find the point where accuracy
+# starts degrading — at sigma<=3.0 the model is robust enough that F1 barely moves,
+# which made the trade-off chart look flat rather than showing a real trend.
+NOISE_MULTIPLIERS = [0.5, 0.8, 1.0, 1.1, 1.3, 1.5, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0]
 
 
 def evaluate_model(model, test_loader, device, pos_weight=None):

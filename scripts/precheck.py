@@ -150,7 +150,7 @@ def check_results(fix=False):
                        cwd=ROOT, check=False)
 
     ok_sw = check("results/privacy_accuracy_tradeoff.json", os.path.exists(sweep),
-                  "missing — run: python scripts/privacy_accuracy_sweep.py (takes ~10 min)", warn=True)
+                  "missing — run: python scripts/privacy_accuracy_sweep.py (takes ~15 min, 12 noise configs)", warn=True)
 
     charts_dir = os.path.join(ROOT, "results", "charts")
     for chart in ["chart_convergence.png", "chart_privacy_accuracy.png", "chart_comm_overhead.png"]:

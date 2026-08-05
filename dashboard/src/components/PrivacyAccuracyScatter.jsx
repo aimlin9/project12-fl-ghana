@@ -2,44 +2,50 @@ import { useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import styles from './ChartCard.module.css'
 
-const OPTS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
-    title: {
-      display: true,
-      text: 'Privacy-Accuracy Trade-off (ε vs F1-score)',
-      color: '#f3f4f6',
-      font: { size: 13, weight: '600' },
-      padding: { bottom: 12 },
-    },
-    tooltip: {
-      callbacks: {
-        label: ctx => {
-          const d = ctx.raw
-          return `σ=${d.sigma}  ε=${d.x.toFixed(3)}  F1=${d.y.toFixed(4)}`
+function buildOpts(yMin, yMax) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
+      title: {
+        display: true,
+        text: 'Privacy-Accuracy Trade-off (ε vs F1-score)',
+        color: '#f3f4f6',
+        font: { size: 13, weight: '600' },
+        padding: { bottom: 12 },
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const d = ctx.raw
+            return `σ=${d.sigma}  ε=${d.x.toFixed(3)}  F1=${d.y.toFixed(4)}`
+          },
         },
       },
     },
-  },
-  scales: {
-    x: {
-      type: 'logarithmic',
-      title: { display: true, text: 'Privacy Budget (ε)  ←  stronger privacy', color: '#6b7280', font: { size: 11 } },
-      ticks: {
-        color: '#6b7280',
-        callback: v => Number.isInteger(Math.log10(v)) || [1,2,5,10,20,50].includes(v) ? v : '',
+    scales: {
+      x: {
+        type: 'logarithmic',
+        title: { display: true, text: 'Privacy Budget (ε)  ←  stronger privacy', color: '#6b7280', font: { size: 11 } },
+        ticks: {
+          color: '#6b7280',
+          callback: v => Number.isInteger(Math.log10(v)) || [1,2,5,10,20,50].includes(v) ? v : '',
+        },
+        grid: { color: 'rgba(255,255,255,0.04)' },
       },
-      grid: { color: 'rgba(255,255,255,0.04)' },
+      // min/max zoom to the actual data range (with padding) rather than a fixed
+      // 0-1 scale — F1 across the tested noise range often only moves by a few
+      // points, which is invisible on a full 0-1 axis and makes a real trade-off
+      // look like a flat line.
+      y: {
+        min: yMin, max: yMax,
+        title: { display: true, text: 'F1-score (macro)', color: '#6b7280', font: { size: 11 } },
+        ticks: { color: '#6b7280' },
+        grid:  { color: 'rgba(255,255,255,0.04)' },
+      },
     },
-    y: {
-      min: 0, max: 1,
-      title: { display: true, text: 'F1-score (macro)', color: '#6b7280', font: { size: 11 } },
-      ticks: { color: '#6b7280' },
-      grid:  { color: 'rgba(255,255,255,0.04)' },
-    },
-  },
+  }
 }
 
 export default function PrivacyAccuracyScatter() {
@@ -63,6 +69,11 @@ export default function PrivacyAccuracyScatter() {
 
   const pts = sweepData.sweep.map(d => ({ x: d.epsilon, y: d.f1_score_macro, sigma: d.noise_multiplier }))
   pts.sort((a, b) => a.x - b.x)
+
+  const allYVals = sweepData.sweep.flatMap(d => [d.f1_score_macro, d.accuracy])
+  const yMin = Math.max(0, Math.min(...allYVals) - 0.05)
+  const yMax = Math.min(1, Math.max(...allYVals) + 0.02)
+  const opts = buildOpts(yMin, yMax)
 
   const data = {
     datasets: [
@@ -95,7 +106,7 @@ export default function PrivacyAccuracyScatter() {
 
   return (
     <div style={{ height: '260px' }}>
-      <Line data={data} options={OPTS} />
+      <Line data={data} options={opts} />
     </div>
   )
 }

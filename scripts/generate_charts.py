@@ -200,15 +200,24 @@ def chart_privacy_accuracy(dpi):
     for i, s in enumerate(sigmas):
         if abs(s - 1.1) < 0.05:
             ax.annotate(f"σ=1.1 (proposal default)\nε={epsilons[i]:.2f}",
-                        xy=(epsilons[i], f1s[i]), xytext=(epsilons[i] + 0.3, f1s[i] - 0.05),
+                        xy=(epsilons[i], f1s[i]), xytext=(epsilons[i] * 2.2, f1s[i] - 0.01),
                         fontsize=8, color="#f97316",
                         arrowprops=dict(arrowstyle="->", color="#f97316", lw=1))
 
+    # Log-scale x-axis: epsilon spans ~0.07-16 here, and the informative low-epsilon
+    # (strong privacy) cluster is unreadable crushed against zero on a linear axis.
+    ax.set_xscale("log")
     ax.set_xlabel("Privacy Budget (ε)  ←  more private", labelpad=8)
     ax.set_ylabel("Score", labelpad=8)
     ax.set_title("Privacy-Accuracy Trade-off  (DP-SGD noise multiplier sweep)", pad=14,
                  fontsize=12, fontweight="bold")
-    ax.set_ylim(0, 1)
+    # Zoom to the actual data range (with padding) instead of a fixed 0-1 scale —
+    # F1 across the tested noise range often only moves by a few points, which is
+    # invisible on a full 0-1 axis and makes a real trade-off look like a flat line.
+    all_y = f1s + accs
+    y_min = max(0.0, min(all_y) - 0.05)
+    y_max = min(1.0, max(all_y) + 0.02)
+    ax.set_ylim(y_min, y_max)
     ax.grid(True)
     ax.legend(loc="lower right", fontsize=9)
 

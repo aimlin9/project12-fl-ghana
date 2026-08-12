@@ -72,6 +72,52 @@ def add_qa(doc, question, answer_paragraphs, honesty=False):
     doc.add_paragraph().paragraph_format.space_after = Pt(2)  # small gap after each QA
 
 
+def add_stack_table(doc, caption, rows):
+    cap = doc.add_paragraph()
+    cr = cap.add_run(caption.upper())
+    cr.bold = True
+    cr.font.size = Pt(10)
+    cr.font.color.rgb = INDIGO
+    cap.paragraph_format.space_before = Pt(6)
+    cap.paragraph_format.space_after = Pt(4)
+
+    table = doc.add_table(rows=1 + len(rows), cols=2)
+    table.style = "Light Grid Accent 1"
+    hdr = table.rows[0].cells
+    hdr[0].text = "Component"
+    hdr[1].text = "Role & why it was chosen"
+    for cell in hdr:
+        for p in cell.paragraphs:
+            for r in p.runs:
+                r.bold = True
+                r.font.size = Pt(9.5)
+    for i, (name, role) in enumerate(rows, start=1):
+        cells = table.rows[i].cells
+        cells[0].text = name
+        cells[1].text = role
+        for p in cells[0].paragraphs:
+            for r in p.runs:
+                r.bold = True
+                r.font.size = Pt(9.5)
+                r.font.color.rgb = NAVY
+        for p in cells[1].paragraphs:
+            for r in p.runs:
+                r.font.size = Pt(9.5)
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
+
+def add_note(doc, text):
+    table = doc.add_table(rows=1, cols=1)
+    cell = table.rows[0].cells[0]
+    shade_cell(cell, "EFF6FF")
+    set_cell_border_left(cell, "3B82F6", size=28)
+    p = cell.paragraphs[0]
+    r = p.add_run(text)
+    r.font.size = Pt(10)
+    r.font.color.rgb = BODY_GRAY
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
+
 def add_fact_strip(doc, facts):
     table = doc.add_table(rows=1, cols=len(facts))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -157,8 +203,48 @@ def build():
     r2.font.size = Pt(10)
     r2.font.color.rgb = BODY_GRAY
 
-    # ---- Section 1: Dataset ----
-    add_section(doc, 1, "The Dataset (OULAD)",
+    # ---- Section 1: Overview ----
+    add_section(doc, 1, "What This Project Is — Technical Framing",
+                "Say this first if asked to summarise the project — it's precise, not just descriptive.")
+
+    add_qa(doc, "In one technically precise sentence, what is this project?", [
+        "A cross-silo federated learning system that trains a shared binary classifier for student at-risk "
+        "prediction across multiple data-owning institutions (simulated schools), using FedAvg for parameter "
+        "aggregation, DP-SGD for a formal per-round privacy guarantee, and Paillier partial homomorphic encryption "
+        "for secure aggregation — so no institution's raw data or unencrypted model update ever leaves its own "
+        "boundary."
+    ])
+    add_qa(doc, 'What makes this "federated learning" specifically, and not just "distributed training"?', [
+        "Distributed training (e.g. multi-GPU data-parallel training) assumes the orchestrator can see and shuffle "
+        "the data across workers freely — the data is centrally owned, just physically spread out for speed. "
+        "Federated learning assumes the opposite: each participant's data is privately owned, non-IID (school_gamma "
+        "is 57% at-risk, school_beta is 49%), and must never leave that participant's boundary.",
+        "We're specifically doing cross-silo FL — a small number (3-5) of reliable, always-available institutional "
+        "participants — as opposed to cross-device FL (Google's original use case: millions of unreliable mobile "
+        "phones). Cross-silo FL is why we can afford synchronous rounds and don't need client-selection sampling "
+        "strategies designed for device churn."
+    ])
+    add_qa(doc, "What's the underlying systems constraint that makes FL the right architecture here, not just a stylistic choice?", [
+        "Data sovereignty, enforced legally: the Ghana Data Protection Act 2012 (Act 843) prohibits transfer of "
+        "personal data — including academic records — between institutions without explicit consent and adequate "
+        "security measures. That means centralised training is not just undesirable but legally infeasible. FL is "
+        "the systems-level solution because it achieves the same ML objective — one globally-optimised shared "
+        "model — under a hard data-locality constraint the centralised approach cannot satisfy."
+    ])
+    add_qa(doc, 'How does this actually improve the education system — concretely, not just "it helps"?', [
+        "Three concrete mechanisms: (1) Early-warning capability without new data infrastructure — district "
+        "education offices get a shared predictive signal across their schools without GES needing to build or "
+        "fund a centralised student-records database. (2) Legal compliance is structural, not procedural — "
+        "privacy isn't a policy added after the fact, it's enforced by the architecture itself (DP-SGD's formal "
+        "(ε,δ) guarantee, Paillier's cryptographic guarantee).",
+        "(3) The architecture generalises beyond education — the same FL + DP-SGD + partial-homomorphic-secure-"
+        "aggregation stack applies to any regulated, multi-institutional setting where data can't be centralised: "
+        "hospital consortia training diagnostic models, banks doing joint fraud detection, inter-agency government "
+        "analytics. This maps to SDG 4 (Quality Education, Target 4.1) and SDG 16 (Target 16.10) directly."
+    ])
+
+    # ---- Section 2: Dataset ----
+    add_section(doc, 2, "The Dataset (OULAD)",
                 "Real data, not synthetic — one of the strongest parts of the project to lean on.")
     add_fact_strip(doc, [("Total records", "32,593"), ("Real quarters", "4"), ("Features engineered", "8")])
 
@@ -188,8 +274,75 @@ def build():
         "the real outcome field."
     ])
 
-    # ---- Section 2: Privacy ----
-    add_section(doc, 2, "Privacy Design — DP-SGD + Paillier",
+    # ---- Section 3: Training pipeline ----
+    add_section(doc, 3, "Model Training Pipeline",
+                'The full, precise answer to "what did you use to train the model" — walk through this layer by layer.')
+
+    add_qa(doc, "What did you use to train the model — full technical answer?", [
+        "Architecture: a fully-connected feedforward network (StudentMLP in PyTorch) — Linear(8->64) -> ReLU -> "
+        "Linear(64->32) -> ReLU -> Linear(32->1), emitting a raw logit. 2,689 trainable parameters total.",
+        "Loss: BCEWithLogitsLoss — combines sigmoid activation and binary cross-entropy into one numerically "
+        "stable log-sum-exp computation, avoiding the float overflow/underflow a separate sigmoid-then-BCELoss "
+        "pipeline risks. A pos_weight term (derived from each partition's class-imbalance ratio, capped at 10x) "
+        "penalises missed at-risk predictions more heavily than false positives.",
+        "Optimiser: Adam, learning rate 0.01, default beta coefficients — re-instantiated fresh each round per "
+        "client (no persisted optimiser state across rounds, the standard FedAvg assumption).",
+        "Local training loop: 3 local epochs per communication round, mini-batch SGD via Adam, batch size 32, "
+        "executed entirely client-side on that school's own data only.",
+        "Aggregation: FedAvg. Each client computes a parameter delta dw_i = w_i(local) - w(global), the server "
+        "computes the weighted mean dw = sum((n_i/N) * dw_i) where n_i is client i's sample count, and updates "
+        "w(global) <- w(global) + dw."
+    ])
+    add_qa(doc, "Walk through exactly how DP-SGD modifies that training loop, mechanically.", [
+        "Opacus wraps the model in a GradSampleModule, which hooks the backward pass to materialise per-sample "
+        "gradients (via a vectorised Jacobian technique) instead of the batch-averaged gradient PyTorch computes "
+        "by default. Each per-sample gradient is clipped to L2 norm <= C (C=1.0), Gaussian noise sampled from "
+        "N(0, sigma^2*C^2*I) is added to the clipped sum (sigma=1.1), and the noisy sum is averaged before the "
+        "optimiser step.",
+        "Privacy loss is tracked with a Renyi Differential Privacy (RDP) accountant, which composes the per-step "
+        "privacy cost across all steps in a round and converts to a reportable (epsilon, delta)-DP guarantee "
+        "(delta fixed at 1e-5, epsilon computed empirically via get_privacy_spent())."
+    ])
+    add_qa(doc, "Where does encryption fit relative to training — before, during, or after?", [
+        "Strictly after. Training (including DP-SGD's clipping and noise injection) happens entirely in plaintext, "
+        "locally, inside PyTorch. Only once the final parameter delta for that round is computed does it get "
+        "Paillier-encrypted, element-wise, immediately before serialisation and network transmission."
+    ])
+
+    # ---- Section 4: Tech stack ----
+    add_section(doc, 4, "Technology Stack — Frontend & Backend",
+                "Name the library, know why it was chosen — that combination is what reads as technical fluency.")
+
+    add_stack_table(doc, "Backend", [
+        ("Python 3.11.9", "Pinned specifically for Opacus 1.4.0 compatibility"),
+        ("Flower 1.8.0", "gRPC-based FL orchestration framework — provides ClientManager, the Strategy abstraction "
+                          "(overridden as PaillierFedAvg), and the round-scheduling state machine"),
+        ("PyTorch 2.3.0", "Tensor/autograd engine for the MLP; integrates natively with Opacus"),
+        ("Opacus 1.4.0", "DP-SGD instrumentation — GradSampleModule + RDP accountant"),
+        ("python-paillier (phe) 1.5.0", "Paillier partial homomorphic cryptosystem implementation (2048-bit modulus)"),
+        ("FastAPI 0.111.0", "ASGI-based async REST API — serves /api/*, runs the FL simulation as a background task"),
+        ("SQLite3", "Embedded, file-based relational store — one file per school partition, so data isolation is "
+                     "enforced at the filesystem level"),
+        ("scikit-learn 1.5.0", "Evaluation metrics — F1, balanced accuracy, AUC-ROC, ROC-curve-derived Youden's J"),
+        ("threading (stdlib)", "The Flower gRPC server and all school clients run as concurrent threads inside one "
+                                "Python process for the simulation"),
+    ])
+    add_stack_table(doc, "Frontend", [
+        ("React 18.3.1", "Component-based SPA — functional components with hooks; no external state library needed"),
+        ("Vite 5", "ESBuild-based dev server/bundler — near-instant hot-module-reload"),
+        ("Chart.js 4 (react-chartjs-2)", "Canvas-based (not SVG) charting — chosen for rendering performance on "
+                                          "charts that redraw every 3 seconds during a live run"),
+        ("CSS Modules", "Locally-scoped component styling, avoids global CSS namespace collisions"),
+    ])
+    add_note(doc,
+        "Two distinct network protocols run concurrently: Flower's FL protocol runs over gRPC (binary, HTTP/2-"
+        "based) on port 8088; the dashboard's API runs over REST/JSON on port 8000. The dashboard polls (fetch() "
+        "every 3000ms) rather than using WebSockets — a deliberate simplicity/robustness tradeoff, reasonable "
+        "given FL updates arrive on a round-based cadence (tens of seconds), not sub-second."
+    )
+
+    # ---- Section 5: Privacy ----
+    add_section(doc, 5, "Privacy Design — DP-SGD + Paillier",
                 "Two layers, protecting against two different threats — the distinction lecturers probe hardest.")
 
     add_qa(doc, "Why do you need both DP-SGD and Paillier? Isn't one enough?", [
@@ -238,7 +391,7 @@ def build():
     ], honesty=True)
 
     # ---- Section 3: Results ----
-    add_section(doc, 3, "Results & Statistical Proof",
+    add_section(doc, 6, "Results & Statistical Proof",
                 "This is the section with real evidence behind it — use the actual numbers, don't round them off.")
     add_fact_strip(doc, [("Baseline F1", "0.9386"), ("Paired t-test p", "0.9156"), ("Cohen's d", "-0.05")])
 
@@ -268,7 +421,7 @@ def build():
     ], honesty=True)
 
     # ---- Section 4: Systems ----
-    add_section(doc, 4, "Systems & Architecture",
+    add_section(doc, 7, "Systems & Architecture",
                 "The infrastructure decisions — why Flower, why this model size, what happens when a school drops out.")
 
     add_qa(doc, "Why Flower specifically, not a custom solution?", [
@@ -298,7 +451,7 @@ def build():
     ], honesty=True)
 
     # ---- Section 5: Metrics ----
-    add_section(doc, 5, "Reading the Metrics Right",
+    add_section(doc, 8, "Reading the Metrics Right",
                 "These trip people up because the numbers look similar but answer different questions.")
 
     add_qa(doc, 'What does "Balanced Accuracy" mean, and why isn\'t it the same as AUC?', [
@@ -328,7 +481,7 @@ def build():
     ])
 
     # ---- Section 6: Dashboard ----
-    add_section(doc, 6, "Walking Through the Dashboard",
+    add_section(doc, 9, "Walking Through the Dashboard",
                 "If asked to explain what's on screen during the live demo, here's the tour.")
 
     add_qa(doc, "What do the header badges and the six metric cards mean?", [

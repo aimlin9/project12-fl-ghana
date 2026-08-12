@@ -4,13 +4,14 @@ import {
   CategoryScale, LinearScale, LogarithmicScale, PointElement, LineElement,
   BarElement, Title, Tooltip, Legend, Filler,
 } from 'chart.js'
-import { fetchTelemetry, startSimulation, stopSimulation, updateConfig, toggleClient } from './api.js'
+import { fetchTelemetry, startSimulation, stopSimulation, updateConfig, toggleClient, fetchBaseline } from './api.js'
 import Header from './components/Header.jsx'
 import TabNav from './components/TabNav.jsx'
 import DistrictView from './components/DistrictView.jsx'
 import SchoolAdminView from './components/SchoolAdminView.jsx'
 import ConfigPanel from './components/ConfigPanel.jsx'
 import StatusBanner from './components/StatusBanner.jsx'
+import CompletionSummaryModal from './components/CompletionSummaryModal.jsx'
 import styles from './App.module.css'
 
 ChartJS.register(
@@ -26,13 +27,24 @@ export default function App() {
   const [activeTab, setActiveTab]   = useState(0)
   const [error, setError]           = useState(null)
   const [actionMsg, setActionMsg]   = useState(null)
+  const [baseline, setBaseline]     = useState(null)
+  const [showSummary, setShowSummary] = useState(false)
   const pollRef = useRef(null)
+  const wasRunningRef = useRef(false)
 
   const poll = useCallback(async () => {
     try {
       const data = await fetchTelemetry()
       setTelemetry(data)
       setError(null)
+
+      // Detect a running -> idle transition (a completed run) and pop the summary.
+      // Guard on rounds.length so a fresh page load while idle doesn't trigger it.
+      const nowRunning = data?.simulation_running ?? false
+      if (wasRunningRef.current && !nowRunning && (data?.rounds?.length ?? 0) > 0) {
+        setShowSummary(true)
+      }
+      wasRunningRef.current = nowRunning
     } catch (e) {
       setError('Cannot reach FL server at localhost:8000 — is it running?')
     }
@@ -40,6 +52,7 @@ export default function App() {
 
   useEffect(() => {
     poll()
+    fetchBaseline().then(setBaseline)
     pollRef.current = setInterval(poll, POLL_MS)
     return () => clearInterval(pollRef.current)
   }, [poll])
@@ -52,6 +65,7 @@ export default function App() {
   const handleStart = async () => {
     try {
       await startSimulation()
+      setShowSummary(false)
       notify('Simulation started — polling for updates…')
     } catch (e) {
       notify(e.message, true)
@@ -126,6 +140,16 @@ export default function App() {
           />
         )}
       </main>
+
+      {showSummary && (
+        <CompletionSummaryModal
+          rounds={telemetry?.rounds ?? []}
+          baseline={baseline}
+          config={telemetry?.config}
+          clients={telemetry?.clients}
+          onClose={() => setShowSummary(false)}
+        />
+      )}
     </div>
   )
 }

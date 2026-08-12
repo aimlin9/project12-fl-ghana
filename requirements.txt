@@ -16,3 +16,4 @@ pydantic==2.7.4
 matplotlib==3.9.0
 ctgan>=0.7.4  # 0.5.4 does not support Python 3.11; 0.7.4+ does (tested with 0.12.1)
 scipy==1.13.1
+python-docx==1.2.0  # scripts/export_qa_guide_docx.py — Defense Q&A .docx export

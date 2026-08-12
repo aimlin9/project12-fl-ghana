@@ -204,43 +204,44 @@ def build():
     r2.font.color.rgb = BODY_GRAY
 
     # ---- Section 1: Overview ----
-    add_section(doc, 1, "What This Project Is — Technical Framing",
-                "Say this first if asked to summarise the project — it's precise, not just descriptive.")
+    add_section(doc, 1, "What This Project Is",
+                "Say this first if asked to summarise the project — plain terms, still technically correct.")
 
-    add_qa(doc, "In one technically precise sentence, what is this project?", [
-        "A cross-silo federated learning system that trains a shared binary classifier for student at-risk "
-        "prediction across multiple data-owning institutions (simulated schools), using FedAvg for parameter "
-        "aggregation, DP-SGD for a formal per-round privacy guarantee, and Paillier partial homomorphic encryption "
-        "for secure aggregation — so no institution's raw data or unencrypted model update ever leaves its own "
-        "boundary."
+    add_qa(doc, "In one sentence, what is this project?", [
+        "A federated learning system that trains one shared machine learning model to predict at-risk students "
+        "across multiple schools, using FedAvg to combine each school's updates, DP-SGD to add a privacy guarantee "
+        "during training, and Paillier encryption to protect each update while it's in transit — so no school's "
+        "raw data, and no unprotected model update, ever leaves that school."
     ])
-    add_qa(doc, 'What makes this "federated learning" specifically, and not just "distributed training"?', [
-        "Distributed training (e.g. multi-GPU data-parallel training) assumes the orchestrator can see and shuffle "
-        "the data across workers freely — the data is centrally owned, just physically spread out for speed. "
-        "Federated learning assumes the opposite: each participant's data is privately owned, non-IID (school_gamma "
-        "is 57% at-risk, school_beta is 49%), and must never leave that participant's boundary.",
-        "We're specifically doing cross-silo FL — a small number (3-5) of reliable, always-available institutional "
-        "participants — as opposed to cross-device FL (Google's original use case: millions of unreliable mobile "
-        "phones). Cross-silo FL is why we can afford synchronous rounds and don't need client-selection sampling "
-        "strategies designed for device churn."
+    add_qa(doc, 'What makes this "federated learning" and not just "distributed training"?', [
+        "Distributed training just splits one shared dataset across multiple machines to train faster — the data "
+        "is still all owned and controlled centrally. Federated learning is the opposite case: each school owns "
+        "its data privately, the data looks different from school to school (school_gamma is 57% at-risk, "
+        "school_beta is 49% — very different class balance), and the raw data is never allowed to leave that "
+        "school at all.",
+        "We specifically use what's called cross-silo federated learning — a small number of reliable "
+        "participants that are always online (our 3-5 schools) — as opposed to cross-device FL (Google's original "
+        "use case: millions of phones connecting and disconnecting at random). Because our \"clients\" are "
+        "reliable schools, not random phones, we can run training in clean, synchronised rounds instead of "
+        "needing extra logic to handle devices randomly dropping out mid-round."
     ])
-    add_qa(doc, "What's the underlying systems constraint that makes FL the right architecture here, not just a stylistic choice?", [
-        "Data sovereignty, enforced legally: the Ghana Data Protection Act 2012 (Act 843) prohibits transfer of "
-        "personal data — including academic records — between institutions without explicit consent and adequate "
-        "security measures. That means centralised training is not just undesirable but legally infeasible. FL is "
-        "the systems-level solution because it achieves the same ML objective — one globally-optimised shared "
-        "model — under a hard data-locality constraint the centralised approach cannot satisfy."
+    add_qa(doc, "What's the real-world reason federated learning was needed here, not just a design preference?", [
+        "A legal one: the Ghana Data Protection Act 2012 doesn't allow schools to send student records to a "
+        "central server without consent. So training one model on everyone's data pooled together isn't just a "
+        "bad idea — it's not legally allowed. Federated learning solves this properly: it lets every school "
+        "contribute to one shared model without any of them ever having to send their students' actual records "
+        "anywhere."
     ])
     add_qa(doc, 'How does this actually improve the education system — concretely, not just "it helps"?', [
-        "Three concrete mechanisms: (1) Early-warning capability without new data infrastructure — district "
-        "education offices get a shared predictive signal across their schools without GES needing to build or "
-        "fund a centralised student-records database. (2) Legal compliance is structural, not procedural — "
-        "privacy isn't a policy added after the fact, it's enforced by the architecture itself (DP-SGD's formal "
-        "(ε,δ) guarantee, Paillier's cryptographic guarantee).",
-        "(3) The architecture generalises beyond education — the same FL + DP-SGD + partial-homomorphic-secure-"
-        "aggregation stack applies to any regulated, multi-institutional setting where data can't be centralised: "
-        "hospital consortia training diagnostic models, banks doing joint fraud detection, inter-agency government "
-        "analytics. This maps to SDG 4 (Quality Education, Target 4.1) and SDG 16 (Target 16.10) directly."
+        "Three concrete ways: (1) Early-warning system without needing new infrastructure — district education "
+        "officers get a shared prediction model across all their schools, without GES having to build and fund "
+        "one big central student-records database, which doesn't exist today. (2) Privacy protection is built "
+        "into the system, not left to policy — DP-SGD and Paillier encryption make privacy a property of the "
+        "code itself, so it doesn't depend on an administrator remembering to follow the rules correctly.",
+        "(3) The same idea works far beyond education — federated learning plus differential privacy plus "
+        "encryption is a reusable pattern for any situation where multiple organisations want to train one "
+        "shared model but legally can't pool their data: hospitals, banks, government agencies. That's the "
+        "bigger contribution — not just one education tool, but a template other regulated sectors could reuse."
     ])
 
     # ---- Section 2: Dataset ----
@@ -276,69 +277,77 @@ def build():
 
     # ---- Section 3: Training pipeline ----
     add_section(doc, 3, "Model Training Pipeline",
-                'The full, precise answer to "what did you use to train the model" — walk through this layer by layer.')
+                'The full answer to "what did you use to train the model" — walk through this layer by layer.')
 
-    add_qa(doc, "What did you use to train the model — full technical answer?", [
-        "Architecture: a fully-connected feedforward network (StudentMLP in PyTorch) — Linear(8->64) -> ReLU -> "
-        "Linear(64->32) -> ReLU -> Linear(32->1), emitting a raw logit. 2,689 trainable parameters total.",
-        "Loss: BCEWithLogitsLoss — combines sigmoid activation and binary cross-entropy into one numerically "
-        "stable log-sum-exp computation, avoiding the float overflow/underflow a separate sigmoid-then-BCELoss "
-        "pipeline risks. A pos_weight term (derived from each partition's class-imbalance ratio, capped at 10x) "
-        "penalises missed at-risk predictions more heavily than false positives.",
-        "Optimiser: Adam, learning rate 0.01, default beta coefficients — re-instantiated fresh each round per "
-        "client (no persisted optimiser state across rounds, the standard FedAvg assumption).",
-        "Local training loop: 3 local epochs per communication round, mini-batch SGD via Adam, batch size 32, "
-        "executed entirely client-side on that school's own data only.",
-        "Aggregation: FedAvg. Each client computes a parameter delta dw_i = w_i(local) - w(global), the server "
-        "computes the weighted mean dw = sum((n_i/N) * dw_i) where n_i is client i's sample count, and updates "
-        "w(global) <- w(global) + dw."
+    add_qa(doc, "What did you use to train the model?", [
+        "Model: a neural network built in PyTorch — 3 layers, going 8 input features -> 64 neurons -> 32 neurons "
+        "-> 1 output, with ReLU activation on the hidden layers. About 2,689 trainable weights in total — small "
+        "enough to train quickly on ordinary hardware.",
+        "Loss function: Binary Cross-Entropy (using PyTorch's BCEWithLogitsLoss, which combines the sigmoid step "
+        "and the loss calculation into one function for numerical stability). We also weight the loss so the "
+        "model is penalised more for missing an at-risk student than for a false alarm, since at-risk students "
+        "are the minority class we care most about catching.",
+        "Optimiser: Adam, a standard gradient descent optimiser, learning rate 0.01.",
+        "Local training: each school trains for 3 epochs (full passes over its own data) per round, in batches "
+        "of 32 students, entirely on its own machine — no other school's data is ever involved.",
+        "Combining the updates (FedAvg): each school sends back the change in its model's weights, not the full "
+        "weights. The server averages these changes — weighted by how many students each school has — and adds "
+        "that average onto the shared global model."
     ])
-    add_qa(doc, "Walk through exactly how DP-SGD modifies that training loop, mechanically.", [
-        "Opacus wraps the model in a GradSampleModule, which hooks the backward pass to materialise per-sample "
-        "gradients (via a vectorised Jacobian technique) instead of the batch-averaged gradient PyTorch computes "
-        "by default. Each per-sample gradient is clipped to L2 norm <= C (C=1.0), Gaussian noise sampled from "
-        "N(0, sigma^2*C^2*I) is added to the clipped sum (sigma=1.1), and the noisy sum is averaged before the "
-        "optimiser step.",
-        "Privacy loss is tracked with a Renyi Differential Privacy (RDP) accountant, which composes the per-step "
-        "privacy cost across all steps in a round and converts to a reportable (epsilon, delta)-DP guarantee "
-        "(delta fixed at 1e-5, epsilon computed empirically via get_privacy_spent())."
+    add_qa(doc, "Walk through how DP-SGD changes that training loop, step by step.", [
+        "Normal gradient descent computes one averaged gradient per batch. DP-SGD instead computes a separate "
+        "gradient for every individual student in the batch, clips each one so no single student's gradient can "
+        "be larger than a fixed size (this stops one student's data from dominating the update), adds random "
+        "Gaussian noise to the sum, and only then averages and updates the model. The added noise is what gives "
+        "the formal privacy guarantee — it makes it mathematically hard to tell, from the final model, whether "
+        "any specific student's data was used.",
+        "We also keep a running total of how much \"privacy budget\" (epsilon) has been spent, using Opacus's "
+        "built-in privacy accountant, and report it every round."
     ])
-    add_qa(doc, "Where does encryption fit relative to training — before, during, or after?", [
-        "Strictly after. Training (including DP-SGD's clipping and noise injection) happens entirely in plaintext, "
-        "locally, inside PyTorch. Only once the final parameter delta for that round is computed does it get "
-        "Paillier-encrypted, element-wise, immediately before serialisation and network transmission."
+    add_qa(doc, "Where does encryption happen relative to training — before, during, or after?", [
+        "After. Training — including DP-SGD's clipping and noise — happens normally, in plain numbers, on each "
+        "school's own computer. Only once a school has its final weight update ready does that update get "
+        "encrypted with Paillier, right before it's sent over the network. Encryption protects the update in "
+        "transit; DP-SGD protects the training step itself. Two separate jobs."
     ])
 
     # ---- Section 4: Tech stack ----
     add_section(doc, 4, "Technology Stack — Frontend & Backend",
-                "Name the library, know why it was chosen — that combination is what reads as technical fluency.")
+                "Name the tool, know why it was chosen — that's what shows real understanding, not the tool name alone.")
 
     add_stack_table(doc, "Backend", [
-        ("Python 3.11.9", "Pinned specifically for Opacus 1.4.0 compatibility"),
-        ("Flower 1.8.0", "gRPC-based FL orchestration framework — provides ClientManager, the Strategy abstraction "
-                          "(overridden as PaillierFedAvg), and the round-scheduling state machine"),
-        ("PyTorch 2.3.0", "Tensor/autograd engine for the MLP; integrates natively with Opacus"),
-        ("Opacus 1.4.0", "DP-SGD instrumentation — GradSampleModule + RDP accountant"),
-        ("python-paillier (phe) 1.5.0", "Paillier partial homomorphic cryptosystem implementation (2048-bit modulus)"),
-        ("FastAPI 0.111.0", "ASGI-based async REST API — serves /api/*, runs the FL simulation as a background task"),
-        ("SQLite3", "Embedded, file-based relational store — one file per school partition, so data isolation is "
-                     "enforced at the filesystem level"),
-        ("scikit-learn 1.5.0", "Evaluation metrics — F1, balanced accuracy, AUC-ROC, ROC-curve-derived Youden's J"),
-        ("threading (stdlib)", "The Flower gRPC server and all school clients run as concurrent threads inside one "
-                                "Python process for the simulation"),
+        ("Python 3.11.9", "The language everything is written in — this version specifically because Opacus "
+                           "(our privacy library) requires it"),
+        ("Flower 1.8.0", "The framework that handles federated learning communication — which school talks to "
+                          "the server, when, and in what order — so we didn't have to build that networking "
+                          "logic ourselves"),
+        ("PyTorch 2.3.0", "The machine learning library used to build and train the neural network"),
+        ("Opacus 1.4.0", "Meta's library for adding differential privacy (DP-SGD) to PyTorch training"),
+        ("python-paillier (phe) 1.5.0", "Implements Paillier encryption — the library that does the actual "
+                                         "encrypt/decrypt/add-while-encrypted operations"),
+        ("FastAPI 0.111.0", "The web framework serving the dashboard's backend API and running the FL "
+                             "simulation in the background"),
+        ("SQLite3", "A lightweight database — each school gets its own database file, which is also how we "
+                     "enforce that one school's data can never accidentally end up in another school's file"),
+        ("scikit-learn 1.5.0", "Used to compute evaluation metrics — F1-score, balanced accuracy, AUC-ROC"),
+        ("Python's threading module", "Lets the FL server and every school's client run at the same time inside "
+                                       "one program, simulating what would normally be separate physical computers"),
     ])
     add_stack_table(doc, "Frontend", [
-        ("React 18.3.1", "Component-based SPA — functional components with hooks; no external state library needed"),
-        ("Vite 5", "ESBuild-based dev server/bundler — near-instant hot-module-reload"),
-        ("Chart.js 4 (react-chartjs-2)", "Canvas-based (not SVG) charting — chosen for rendering performance on "
-                                          "charts that redraw every 3 seconds during a live run"),
-        ("CSS Modules", "Locally-scoped component styling, avoids global CSS namespace collisions"),
+        ("React 18.3.1", "The JavaScript library used to build the dashboard's user interface out of reusable "
+                          "components"),
+        ("Vite 5", "Runs the dashboard locally during development and rebuilds it instantly whenever we change "
+                    "the code"),
+        ("Chart.js 4 (react-chartjs-2)", "The charting library behind every graph on the dashboard"),
+        ("CSS Modules", "Keeps each component's styling separate, so styles from one part of the page can't "
+                         "accidentally clash with another"),
     ])
     add_note(doc,
-        "Two distinct network protocols run concurrently: Flower's FL protocol runs over gRPC (binary, HTTP/2-"
-        "based) on port 8088; the dashboard's API runs over REST/JSON on port 8000. The dashboard polls (fetch() "
-        "every 3000ms) rather than using WebSockets — a deliberate simplicity/robustness tradeoff, reasonable "
-        "given FL updates arrive on a round-based cadence (tens of seconds), not sub-second."
+        "Two separate connections run at the same time: the federated learning traffic uses gRPC (the fast, "
+        "binary protocol Flower is built on) on port 8088, while the dashboard talks to its own backend using a "
+        "normal REST API over HTTP on port 8000. The dashboard checks for new data every 3 seconds rather than "
+        "keeping a permanent live connection open (like a WebSocket would) — simpler to build, and reliable "
+        "enough since an FL round takes far longer than 3 seconds anyway."
     )
 
     # ---- Section 5: Privacy ----

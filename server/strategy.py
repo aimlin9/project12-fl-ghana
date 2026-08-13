@@ -77,7 +77,7 @@ telemetry_data = {
         "lr": 0.01,
         "total_rounds": 10,
         "num_nodes": 3,
-        "paillier_key_bits": 2048,
+        "paillier_key_bits": 1024,
         "noise_multiplier": 1.1,
         "max_grad_norm": 1.0,
     },

@@ -46,6 +46,44 @@ class ConfigModel(BaseModel):
 
 @app.get("/api/telemetry")
 def get_telemetry():
+    # Only load from DB once on startup when idle — never during or after a live run
+    if (
+        not telemetry_data["rounds"]
+        and not telemetry_data.get("_db_rounds_loaded")
+        and not telemetry_data["simulation_running"]
+    ):
+        db_path = _get_metrics_db_path()
+        if os.path.exists(db_path):
+            import sqlite3 as _sq
+            conn = _sq.connect(db_path)
+            conn.row_factory = _sq.Row
+            rows = conn.execute(
+                "SELECT round_id, node_id, f1, accuracy, loss, comm_mb, epsilon, latency_s "
+                "FROM fl_metrics ORDER BY round_id"
+            ).fetchall()
+            conn.close()
+
+            from collections import defaultdict
+            rounds_map = defaultdict(list)
+            for r in rows:
+                rounds_map[r["round_id"]].append(dict(r))
+
+            merged = []
+            for round_id, nodes in sorted(rounds_map.items()):
+                merged.append({
+                    "round": round_id,
+                    "f1_score": sum(n["f1"] for n in nodes) / len(nodes),
+                    "accuracy": sum(n["accuracy"] for n in nodes) / len(nodes),
+                    "loss": sum(n["loss"] for n in nodes) / len(nodes),
+                    "comm_overhead_mb": sum(n["comm_mb"] for n in nodes) / len(nodes),
+                    "max_epsilon": max(n["epsilon"] for n in nodes),
+                    "active_clients": len(nodes),
+                    "failed_clients": 0,
+                    "is_encrypted": True,
+                })
+            telemetry_data["rounds"] = merged
+        telemetry_data["_db_rounds_loaded"] = True
+
     return JSONResponse(content=telemetry_data)
 
 
@@ -241,6 +279,7 @@ def run_fl_simulation():
     telemetry_data["simulation_running"] = True
     telemetry_data["_stop_requested"] = False
     telemetry_data["rounds"] = []
+    telemetry_data["_db_rounds_loaded"] = False
     telemetry_data["live_accuracy"] = None
     telemetry_data["last_round_metrics"] = {}
     telemetry_data["_live_per_school"] = {}

@@ -2,6 +2,7 @@ import os
 import json
 import socket
 import sqlite3
+import sys
 import threading
 import time
 import uvicorn
@@ -12,8 +13,14 @@ from pydantic import BaseModel
 import flwr as fl
 
 from server.strategy import (
-    telemetry_data, PaillierFedAvg, _get_metrics_db_path
+    telemetry_data, PaillierFedAvg, _get_metrics_db_path, _build_default_clients
 )
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    # Windows consoles often default to a legacy codepage that can't render
+    # the em-dashes used in this project's log output.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 app = FastAPI(title="Cross-School Federated Learning — API")
 
@@ -249,6 +256,7 @@ def run_fl_simulation():
     telemetry_data["live_accuracy"] = None
     telemetry_data["last_round_metrics"] = {}
     telemetry_data["_live_per_school"] = {}
+    telemetry_data["source"] = "dashboard"
 
     # Reset client stats and transient statuses for a clean slate
     for school in telemetry_data["clients"]:
@@ -269,7 +277,10 @@ def run_fl_simulation():
     def start_server_thread():
         try:
             fl.server.start_server(
-                server_address="127.0.0.1:8088",
+                # 0.0.0.0, not 127.0.0.1: in docker-compose the school clients run in
+                # separate containers and reach this one over the bridge network at
+                # server:8088 — a loopback-only bind would refuse those connections.
+                server_address="0.0.0.0:8088",
                 config=fl.server.ServerConfig(
                     num_rounds=int(telemetry_data["config"]["total_rounds"])
                 ),
@@ -322,7 +333,60 @@ def run_fl_simulation():
             telemetry_data["clients"][school]["status"] = "Idle"
 
     telemetry_data["simulation_running"] = False
+    telemetry_data["source"] = None
     print("[Simulation] Ended.")
+
+
+# ---------------------------------------------------------------------------
+# CLI simulation bridge — lets `scripts/run_fl_simulation.py` (a separate
+# process from this FastAPI server) report live progress into telemetry_data
+# so the dashboard reflects CLI-launched runs exactly like dashboard-launched
+# ones, and so the dashboard's Stop button can halt a CLI run too.
+# ---------------------------------------------------------------------------
+
+@app.post("/api/telemetry/cli-start")
+def cli_start(payload: dict):
+    if telemetry_data["simulation_running"]:
+        raise HTTPException(status_code=400, detail="A simulation is already tracked as running")
+    school_names = payload.get("school_names") or list(telemetry_data["clients"].keys())
+    config = payload.get("config") or {}
+
+    telemetry_data["clients"] = _build_default_clients(school_names)
+    telemetry_data["config"].update(config)
+    telemetry_data["rounds"] = []
+    telemetry_data["simulation_running"] = True
+    telemetry_data["_stop_requested"] = False
+    telemetry_data["live_accuracy"] = None
+    telemetry_data["last_round_metrics"] = {}
+    telemetry_data["_live_per_school"] = {}
+    telemetry_data["source"] = "cli"
+    return {"status": "ok"}
+
+
+@app.post("/api/telemetry/cli-round")
+def cli_round(payload: dict):
+    round_metrics = payload.get("round_metrics")
+    clients = payload.get("clients") or {}
+    if round_metrics:
+        telemetry_data["rounds"].append(round_metrics)
+        telemetry_data["live_accuracy"] = None
+        telemetry_data["_live_per_school"] = {}
+    for name, info in clients.items():
+        if name in telemetry_data["clients"]:
+            telemetry_data["clients"][name].update(info)
+    return {"status": "ok"}
+
+
+@app.post("/api/telemetry/cli-end")
+def cli_end():
+    telemetry_data["simulation_running"] = False
+    telemetry_data["source"] = None
+    return {"status": "ok"}
+
+
+@app.get("/api/telemetry/cli-stop-check")
+def cli_stop_check():
+    return {"stop_requested": bool(telemetry_data.get("_stop_requested", False))}
 
 
 @app.post("/api/stop")

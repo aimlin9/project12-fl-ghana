@@ -10,17 +10,28 @@ Results are saved to logs/fl_metrics.db and printed to console.
 """
 
 import argparse
+import json
 import os
 import sys
 import threading
 import time
 import socket
+import urllib.request
+import urllib.error
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    # Windows consoles often default to a legacy codepage that can't render
+    # the em-dashes used in this script's log output.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import flwr as fl
 from server.strategy import PaillierFedAvg, SCHOOL_NAMES_ALL, telemetry_data, _build_default_clients
+
+DASHBOARD_URL = "http://127.0.0.1:8000"
 
 
 def wait_for_port(host, port, max_wait=10.0):
@@ -33,6 +44,91 @@ def wait_for_port(host, port, max_wait=10.0):
         except OSError:
             time.sleep(0.5)
     return False
+
+
+def _post_json(path, payload, timeout=1.5):
+    """Best-effort POST to the FastAPI dashboard server. Never raises."""
+    try:
+        data = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            f"{DASHBOARD_URL}{path}", data=data,
+            headers={"Content-Type": "application/json"}, method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode())
+    except Exception:
+        return None
+
+
+def _get_json(path, timeout=1.0):
+    try:
+        with urllib.request.urlopen(f"{DASHBOARD_URL}{path}", timeout=timeout) as resp:
+            return json.loads(resp.read().decode())
+    except Exception:
+        return None
+
+
+def _dashboard_is_up():
+    return _get_json("/api/telemetry") is not None
+
+
+class DashboardBridge:
+    """Mirrors this process's local telemetry_data onto a running FastAPI
+    dashboard server (if one is reachable at DASHBOARD_URL), and relays the
+    dashboard's Stop button back into this process's own stop flag.
+
+    The CLI script and the FastAPI server run in separate OS processes, so
+    each has its own copy of `telemetry_data` — this bridge is what makes a
+    CLI-launched run visible on the dashboard in real time, exactly like a
+    dashboard-launched run.
+    """
+
+    def __init__(self, school_names, config):
+        self.enabled = _dashboard_is_up()
+        self._pushed_rounds = 0
+        self._stop_event = threading.Event()
+        self._watch_thread = None
+        if self.enabled:
+            print("[FL] Dashboard detected at localhost:8000 — this run will appear live on it.")
+            _post_json("/api/telemetry/cli-start", {
+                "school_names": school_names,
+                "config": config,
+            })
+        else:
+            print("[FL] No dashboard detected at localhost:8000 — running in standalone mode.")
+
+    def start_watching(self):
+        if not self.enabled:
+            return
+        self._watch_thread = threading.Thread(target=self._watch_loop, daemon=True)
+        self._watch_thread.start()
+
+    def _watch_loop(self):
+        while not self._stop_event.is_set():
+            self._push_new_rounds()
+            status = _get_json("/api/telemetry/cli-stop-check")
+            if status and status.get("stop_requested"):
+                telemetry_data["_stop_requested"] = True
+            time.sleep(1.0)
+
+    def _push_new_rounds(self):
+        rounds = telemetry_data.get("rounds", [])
+        while self._pushed_rounds < len(rounds):
+            round_metrics = rounds[self._pushed_rounds]
+            _post_json("/api/telemetry/cli-round", {
+                "round_metrics": round_metrics,
+                "clients": telemetry_data.get("clients", {}),
+            })
+            self._pushed_rounds += 1
+
+    def stop(self):
+        if not self.enabled:
+            return
+        self._stop_event.set()
+        if self._watch_thread:
+            self._watch_thread.join(timeout=2.0)
+        self._push_new_rounds()
+        _post_json("/api/telemetry/cli-end", {})
 
 
 def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=2048, seed=42):
@@ -50,6 +146,9 @@ def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=204
     telemetry_data["config"]["local_epochs"] = epochs
     telemetry_data["config"]["total_rounds"] = rounds
     telemetry_data["config"]["num_nodes"]    = nodes
+    telemetry_data["config"]["paillier_key_bits"] = key_bits
+
+    bridge = DashboardBridge(school_names, dict(telemetry_data["config"]))
 
     strategy = PaillierFedAvg(school_names=school_names, key_length=key_bits)
 
@@ -74,6 +173,7 @@ def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=204
             print(f"[FL] Server failed to start: {server_error['msg']}")
         else:
             print("[FL] Timed out waiting for server — check if port 8088 is already in use.")
+        bridge.stop()
         sys.exit(1)
 
     print("[FL] Server ready. Launching client threads...")
@@ -87,12 +187,15 @@ def run_simulation(rounds, nodes, use_dp, use_paillier, lr, epochs, key_bits=204
         except Exception as exc:
             print(f"[FL CLIENT ERROR — {school_name}] {exc}")
 
+    bridge.start_watching()
+
     for school in school_names:
         t = threading.Thread(target=run_client, args=(school,), daemon=True)
         t.start()
         client_threads.append(t)
 
     server_thread.join()
+    bridge.stop()
 
     print("\n[FL] Simulation complete.")
     print(f"[FL] Metrics saved to logs/fl_metrics.db — view with: sqlite3 logs/fl_metrics.db 'SELECT * FROM fl_metrics;'")

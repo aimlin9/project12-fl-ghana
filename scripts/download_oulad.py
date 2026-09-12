@@ -5,10 +5,13 @@ Downloads and extracts the real Open University Learning Analytics Dataset (OULA
 into data/oulad_raw/. This is a one-time setup step required before
 scripts/partition_oulad.py can build real school-node databases.
 
-The dataset's original host (analyse.kmi.open.ac.uk) now redirects to
-research.stem.open.ac.uk, which serves the same anonymisedData.zip used in the
-original OULAD paper (Kuzilek et al., 2017) — verified by studentInfo.csv containing
-exactly 32,593 rows.
+As of this writing, the OU has retired public direct-download access to OULAD —
+both the original host (analyse.kmi.open.ac.uk) and its successor
+(research.stem.open.ac.uk) now only serve an "OU staff access" landing page, with
+no public dataset URL. If OULAD download links change again in the future, update
+OULAD_URL below. Until then, this script will fail fast with a clear message —
+use `python scripts/partition_oulad.py --synthetic` instead, which needs no
+download and produces the same school-partition schema.
 
 Usage:
     python scripts/download_oulad.py
@@ -22,6 +25,12 @@ import urllib.error
 import zipfile
 
 OULAD_URL = "http://schools.stem.open.ac.uk/cdn/files/anonymisedData.zip"
+SYNTHETIC_FALLBACK_HINT = (
+    "OULAD is not publicly downloadable right now — the OU's dataset host "
+    "currently redirects to a staff-only landing page with no public zip link.\n"
+    "Use the synthetic fallback instead, which needs no download:\n"
+    "    python scripts/partition_oulad.py --nodes 3 --output data/partitions/ --synthetic"
+)
 EXPECTED_STUDENT_INFO_ROWS = 32593
 REQUIRED_FILES = [
     "courses.csv", "studentInfo.csv", "studentRegistration.csv",
@@ -86,6 +95,7 @@ def main():
     ok = download_with_resume(OULAD_URL, zip_path)
     if not ok:
         print("ERROR: Failed to download a complete zip after all retries.", file=sys.stderr)
+        print(f"\n{SYNTHETIC_FALLBACK_HINT}", file=sys.stderr)
         sys.exit(1)
 
     print("Extracting...")

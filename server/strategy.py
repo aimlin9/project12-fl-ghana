@@ -84,6 +84,7 @@ telemetry_data = {
     "simulation_running": False,
     "live_accuracy": None,
     "_stop_requested": False,
+    "source": None,
 }
 
 

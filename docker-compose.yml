@@ -25,6 +25,10 @@ services:
       dockerfile: ../docker/Dockerfile.dashboard
     ports:
       - "3000:3000"   # React admin portal — open http://localhost:3000
+    environment:
+      # Container-to-container hostname — 127.0.0.1 would be this container's
+      # own loopback, not the server container.
+      - API_PROXY_TARGET=http://server:8000
     depends_on:
       - server
     networks:
@@ -37,6 +41,8 @@ services:
     depends_on:
       - server
     command: python scripts/run_client.py --school school_alpha --server server:8088
+    environment:
+      - DASHBOARD_API_URL=http://server:8000
     volumes:
       - ./data:/app/data
     networks:
@@ -49,6 +55,8 @@ services:
     depends_on:
       - server
     command: python scripts/run_client.py --school school_beta --server server:8088
+    environment:
+      - DASHBOARD_API_URL=http://server:8000
     volumes:
       - ./data:/app/data
     networks:
@@ -61,6 +69,8 @@ services:
     depends_on:
       - server
     command: python scripts/run_client.py --school school_gamma --server server:8088
+    environment:
+      - DASHBOARD_API_URL=http://server:8000
     volumes:
       - ./data:/app/data
     networks:
@@ -77,6 +87,8 @@ services:
   #   depends_on:
   #     - server
   #   command: python scripts/run_client.py --school school_delta --server server:8088
+  #   environment:
+  #     - DASHBOARD_API_URL=http://server:8000
   #   volumes:
   #     - ./data:/app/data
   #   networks:
@@ -89,6 +101,8 @@ services:
   #   depends_on:
   #     - server
   #   command: python scripts/run_client.py --school school_epsilon --server server:8088
+  #   environment:
+  #     - DASHBOARD_API_URL=http://server:8000
   #   volumes:
   #     - ./data:/app/data
   #   networks:

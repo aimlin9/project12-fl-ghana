@@ -1,3 +1,4 @@
+import os
 import flwr as fl
 import torch
 import numpy as np
@@ -10,6 +11,12 @@ from client.model import get_model
 from client.database import load_data
 from security.crypto import deserialize_public_key, encrypt_weights, serialize_encrypted
 from security.privacy import make_private_training, get_privacy_spent
+
+# In docker-compose each school runs in its own container while FastAPI runs in
+# the separate "server" container, so 127.0.0.1 (this container's own loopback)
+# never reaches it — docker-compose.yml sets DASHBOARD_API_URL=http://server:8000
+# for that case. Same-host runs (CLI or dashboard-launched) keep the default.
+DASHBOARD_API_URL = os.environ.get("DASHBOARD_API_URL", "http://127.0.0.1:8000")
 
 
 def get_flat_weights(model):
@@ -33,7 +40,7 @@ def set_flat_weights(model, flat_weights):
 
 def get_client_status(school_name):
     try:
-        url = f"http://127.0.0.1:8000/api/client/{school_name}/status"
+        url = f"{DASHBOARD_API_URL}/api/client/{school_name}/status"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=0.5) as response:
             data = json.loads(response.read().decode())
@@ -78,7 +85,7 @@ class StudentFLClient(fl.client.NumPyClient):
         try:
             data = json.dumps({"accuracy": acc, "school": self.school_name}).encode()
             req = urllib.request.Request(
-                "http://127.0.0.1:8000/api/progress", data=data,
+                f"{DASHBOARD_API_URL}/api/progress", data=data,
                 headers={"Content-Type": "application/json"}, method="POST"
             )
             urllib.request.urlopen(req, timeout=0.5)

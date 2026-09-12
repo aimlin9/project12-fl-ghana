@@ -17,5 +17,6 @@ COPY . .
 # Set PYTHONPATH
 ENV PYTHONPATH=/app
 
-# Default command
-CMD ["python", "scripts/run_client.py"]
+# Default command — docker-compose.yml overrides this per service with the
+# right --school; this default just keeps the image runnable standalone.
+CMD ["python", "scripts/run_client.py", "--school", "school_alpha", "--server", "server:8088"]

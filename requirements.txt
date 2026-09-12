@@ -1,12 +1,13 @@
 # Production / Raspberry Pi 4 target: Python 3.11.9
 # Proposal-specified versions (use with: python3.11 -m pip install -r requirements.txt)
-# For development on Python 3.14+ use: pip install -r requirements-dev.txt
+# torch==2.3.0 has no wheels beyond Python 3.11 — use Python 3.11 for this project.
 
 flwr==1.8.0
 torch==2.3.0
 opacus==1.4.0
 phe==1.5.0
-fastapi==0.111.0
+fastapi==0.110.0  # 0.111.0 added a hard fastapi-cli dependency requiring typer>=0.12,
+                  # which conflicts with flwr==1.8.0's typer<0.10 pin — unresolvable together
 uvicorn==0.30.1
 scikit-learn==1.5.0
 pandas==2.2.2

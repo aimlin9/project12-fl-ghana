@@ -16,6 +16,12 @@ import numpy as np
 import torch
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    # Windows consoles often default to a legacy codepage that can't render
+    # the em-dashes used in this script's output.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from client.model import get_model

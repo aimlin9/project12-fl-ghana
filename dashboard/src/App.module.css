@@ -1,42 +1,51 @@
 .app {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
 .main {
   flex: 1;
-  padding: 1.5rem 2rem 3rem;
+  padding: 1.75rem 2rem 4rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+}
+
+@media (max-width: 640px) {
+  .main { padding: 1.25rem 1rem 3rem; }
 }
 
 .toastOk, .toastError {
   position: fixed;
   top: 1rem;
   right: 1.5rem;
+  left: 1.5rem;
+  margin-left: auto;
+  width: fit-content;
+  max-width: calc(100vw - 3rem);
   z-index: 999;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
   font-weight: 500;
-  animation: slideIn 0.2s ease;
+  box-shadow: var(--shadow-md);
+  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.toastOk    { background: #064e3b; color: #6ee7b7; border: 1px solid #065f46; }
-.toastError { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+.toastOk    { background: #14201a; color: var(--success); border: 1px solid var(--success-border); }
+.toastError { background: #221512; color: var(--danger); border: 1px solid var(--danger-border); }
 
 .errorBar {
-  background: rgba(239,68,68,0.1);
-  border-bottom: 1px solid rgba(239,68,68,0.3);
-  color: #fca5a5;
+  background: var(--danger-soft);
+  border-bottom: 1px solid var(--danger-border);
+  color: var(--danger);
   text-align: center;
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

@@ -1,25 +1,30 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
+  background: rgba(8, 7, 5, 0.65);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
   z-index: 1000;
   animation: fadeIn 0.15s ease;
 }
 
 .modal {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
   padding: 1.75rem;
-  width: min(560px, 92vw);
+  width: min(560px, 100%);
   max-height: 88vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: popIn 0.18s ease;
+  box-shadow: var(--shadow-lg);
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 480px) {
+  .modal { padding: 1.35rem; }
 }
 
 .header {
@@ -31,22 +36,21 @@
 
 .checkIcon {
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 50%;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  background: var(--success-soft);
+  border: 1px solid var(--success-border);
+  color: var(--success);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 700;
 }
 
 .title {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text, #f3f4f6);
+  color: var(--text);
 }
 
 .subtitle {
@@ -62,58 +66,70 @@
   margin-bottom: 1.25rem;
 }
 
+@media (max-width: 420px) {
+  .statGrid { grid-template-columns: 1fr; }
+}
+
 .stat {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-left: 3px solid;
-  border-radius: 0.6rem;
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   padding: 0.7rem 0.9rem;
 }
 
+.stat.accent  { border-left-color: var(--accent); }
+.stat.success { border-left-color: var(--success); }
+
 .statLabel {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--muted);
   font-weight: 600;
   margin-bottom: 0.3rem;
 }
 
 .statValue {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   line-height: 1.1;
+  color: var(--text);
 }
+
+.stat.accent  .statValue { color: var(--accent-strong); }
+.stat.success .statValue { color: var(--success); }
 
 .statSub {
   font-size: 0.68rem;
-  color: var(--muted);
-  margin-top: 0.25rem;
+  color: var(--faint);
+  margin-top: 0.3rem;
 }
 
 .targetOk, .targetMiss {
   font-size: 0.82rem;
   padding: 0.65rem 0.9rem;
-  border-radius: 0.6rem;
+  border-radius: var(--radius-sm);
   margin-bottom: 1.25rem;
 }
 
-.targetOk   { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
-.targetMiss { background: rgba(245,158,11,0.1); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.targetOk   { background: var(--success-soft); color: var(--success); border: 1px solid var(--success-border); }
+.targetMiss { background: var(--accent-soft);  color: var(--accent-strong); border: 1px solid var(--accent-border); }
 
 .closeBtn {
   width: 100%;
   padding: 0.7rem;
-  background: var(--primary);
-  color: white;
+  background: var(--accent);
+  color: var(--on-accent);
   border: none;
-  border-radius: 0.6rem;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-.closeBtn:hover { opacity: 0.9; }
+.closeBtn:hover { background: var(--accent-strong); }
 
 @keyframes fadeIn {
   from { opacity: 0; }

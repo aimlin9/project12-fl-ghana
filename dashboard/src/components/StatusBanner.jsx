@@ -5,10 +5,10 @@ export default function StatusBanner({ rounds, totalRounds }) {
   return (
     <div className={styles.banner}>
       <span className={styles.dot} />
-      <span>
+      <span className={`${styles.text} mono`}>
         {last
-          ? `Simulation running — Round ${last.round} of ${totalRounds} completed · F1: ${(last.f1_score ?? 0).toFixed(3)} · Acc: ${(last.accuracy ?? 0).toFixed(3)}`
-          : `Simulation starting — waiting for school nodes to connect…`}
+          ? `Round ${last.round} of ${totalRounds} completed · F1 ${(last.f1_score ?? 0).toFixed(3)} · Acc ${(last.accuracy ?? 0).toFixed(3)}`
+          : `Simulation starting — waiting for school nodes to connect`}
       </span>
     </div>
   )

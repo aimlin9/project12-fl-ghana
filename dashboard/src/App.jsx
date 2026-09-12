@@ -104,7 +104,7 @@ export default function App() {
 
   return (
     <div className={styles.app}>
-      <Header running={running} keyBits={telemetry?.config?.paillier_key_bits} />
+      <Header running={running} source={telemetry?.source} />
 
       {actionMsg && (
         <div className={actionMsg.isError ? styles.toastError : styles.toastOk}>

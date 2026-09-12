@@ -7,12 +7,12 @@ function buildOpts(yMin, yMax) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
+      legend: { labels: { color: '#a39a8d', font: { size: 11, family: 'Manrope' } } },
       title: {
         display: true,
         text: 'Privacy-Accuracy Trade-off (ε vs F1-score)',
-        color: '#f3f4f6',
-        font: { size: 13, weight: '600' },
+        color: '#efe9df',
+        font: { size: 13, weight: '600', family: 'Manrope' },
         padding: { bottom: 12 },
       },
       tooltip: {
@@ -27,12 +27,12 @@ function buildOpts(yMin, yMax) {
     scales: {
       x: {
         type: 'logarithmic',
-        title: { display: true, text: 'Privacy Budget (ε)  ←  stronger privacy', color: '#6b7280', font: { size: 11 } },
+        title: { display: true, text: 'Privacy budget (ε) — stronger privacy to the left', color: '#756c60', font: { size: 11 } },
         ticks: {
-          color: '#6b7280',
+          color: '#756c60',
           callback: v => Number.isInteger(Math.log10(v)) || [1,2,5,10,20,50].includes(v) ? v : '',
         },
-        grid: { color: 'rgba(255,255,255,0.04)' },
+        grid: { color: 'rgba(240,235,225,0.05)' },
       },
       // min/max zoom to the actual data range (with padding) rather than a fixed
       // 0-1 scale — F1 across the tested noise range often only moves by a few
@@ -40,9 +40,9 @@ function buildOpts(yMin, yMax) {
       // look like a flat line.
       y: {
         min: yMin, max: yMax,
-        title: { display: true, text: 'F1-score (macro)', color: '#6b7280', font: { size: 11 } },
-        ticks: { color: '#6b7280' },
-        grid:  { color: 'rgba(255,255,255,0.04)' },
+        title: { display: true, text: 'F1-score (macro)', color: '#756c60', font: { size: 11 } },
+        ticks: { color: '#756c60' },
+        grid:  { color: 'rgba(240,235,225,0.05)' },
       },
     },
   }
@@ -61,8 +61,10 @@ export default function PrivacyAccuracyScatter() {
   if (!sweepData?.sweep?.length) {
     return (
       <div className={styles.empty}>
-        Privacy-accuracy scatter not available yet.{' '}
-        Run <code>python scripts/privacy_accuracy_sweep.py</code> then refresh.
+        <span>
+          Privacy-accuracy scatter not available yet.{' '}
+          Run <code>python scripts/privacy_accuracy_sweep.py</code> then refresh.
+        </span>
       </div>
     )
   }
@@ -80,8 +82,8 @@ export default function PrivacyAccuracyScatter() {
       {
         label: 'F1 vs ε',
         data: pts,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245,158,11,0.15)',
+        borderColor: '#c79a53',
+        backgroundColor: 'rgba(199,154,83,0.15)',
         borderWidth: 2,
         pointRadius: 6,
         pointHoverRadius: 8,
@@ -92,7 +94,7 @@ export default function PrivacyAccuracyScatter() {
       {
         label: 'Accuracy vs ε',
         data: sweepData.sweep.map(d => ({ x: d.epsilon, y: d.accuracy, sigma: d.noise_multiplier })).sort((a,b)=>a.x-b.x),
-        borderColor: '#10b981',
+        borderColor: '#5fab7e',
         backgroundColor: 'transparent',
         borderWidth: 1.5,
         borderDash: [5, 3],
@@ -105,7 +107,7 @@ export default function PrivacyAccuracyScatter() {
   }
 
   return (
-    <div style={{ height: '260px' }}>
+    <div className={styles.boxSmall}>
       <Line data={data} options={opts} />
     </div>
   )

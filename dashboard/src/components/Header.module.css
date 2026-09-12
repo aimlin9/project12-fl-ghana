@@ -2,67 +2,90 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--border);
-  background: rgba(11,15,25,0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(13,12,10,0.92);
+  backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.logo { display: flex; align-items: center; gap: 0.85rem; }
+@media (max-width: 640px) {
+  .header { padding: 0.85rem 1rem; }
+}
 
-.icon {
-  width: 2.4rem;
-  height: 2.4rem;
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  border-radius: 0.5rem;
+.logo { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+
+.mark {
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent-strong);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  box-shadow: 0 0 14px rgba(99,102,241,0.4);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  font-family: var(--font-mono);
 }
 
 .title {
-  font-weight: 600;
-  font-size: 1rem;
-  background: linear-gradient(to right, #fff, #d1d5db);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sub {
   font-size: 0.72rem;
   color: var(--muted);
-  margin-top: 0.1rem;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-
-.badge {
-  font-size: 0.72rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 9999px;
-  background: rgba(99,102,241,0.12);
-  border: 1px solid rgba(99,102,241,0.25);
-  color: #818cf8;
-  font-weight: 500;
+@media (max-width: 560px) {
+  .sub { display: none; }
 }
 
-.badgeActive {
-  composes: badge;
-  background: rgba(16,185,129,0.12);
-  border-color: rgba(16,185,129,0.3);
-  color: #6ee7b7;
-}
-
-.badgeIdle {
-  composes: badge;
-  background: rgba(156,163,175,0.1);
-  border-color: rgba(156,163,175,0.2);
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--muted);
+}
+
+.dotLive, .dotIdle {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotLive {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+.dotIdle { background: var(--faint); }
+
+.statusText { white-space: nowrap; }
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
 }

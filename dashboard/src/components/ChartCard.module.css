@@ -1,19 +1,37 @@
 .empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 180px;
-  color: var(--muted);
+  gap: 0.3rem;
+  min-height: 180px;
+  color: var(--faint);
   font-size: 0.85rem;
   text-align: center;
   padding: 1rem;
 }
 
+.empty code {
+  font-family: var(--font-mono);
+  background: var(--bg-raised);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
 .sectionTitle {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--muted);
   margin-bottom: 1rem;
+}
+
+.boxLarge { height: 320px; }
+.boxSmall { height: 260px; }
+
+.baselineNote {
+  margin-top: 0.5rem;
+  color: var(--accent-strong);
+  font-size: 0.85rem;
 }

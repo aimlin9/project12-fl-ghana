@@ -1,5 +1,13 @@
 import styles from './CompletionSummaryModal.module.css'
 
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 8.5l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function CompletionSummaryModal({ rounds, baseline, config, clients, onClose }) {
   const last = rounds.at(-1) ?? {}
   const totalRounds = rounds.length
@@ -18,9 +26,9 @@ export default function CompletionSummaryModal({ rounds, baseline, config, clien
     <div className={styles.backdrop} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
-          <span className={styles.checkIcon}>✓</span>
+          <span className={styles.checkIcon}><CheckIcon /></span>
           <div>
-            <div className={styles.title}>Simulation Complete</div>
+            <div className={styles.title}>Simulation complete</div>
             <div className={styles.subtitle}>
               {totalRounds} round{totalRounds === 1 ? '' : 's'} finished · {onlineCount}/{nodeNames.length} nodes participated
             </div>
@@ -28,23 +36,23 @@ export default function CompletionSummaryModal({ rounds, baseline, config, clien
         </div>
 
         <div className={styles.statGrid}>
-          <Stat label="Final F1 (macro)" value={lastF1?.toFixed(4) ?? '—'} accent="#6366f1" />
-          <Stat label="Balanced Accuracy" value={last.accuracy != null ? `${(last.accuracy * 100).toFixed(1)}%` : '—'} accent="#a855f7" />
-          <Stat label="AUC-ROC" value={last.auc_roc?.toFixed(4) ?? '—'} accent="#a855f7" />
-          <Stat label="Max Privacy Budget ε" value={maxEpsilon.toFixed(3)} accent="#f59e0b" sub="worst case across nodes" />
-          <Stat label="Total Comm. Overhead" value={`${totalCommMb.toFixed(2)} MB`} accent="#06b6d4" sub={`${totalRounds} round${totalRounds === 1 ? '' : 's'}, Paillier-encrypted`} />
+          <Stat label="Final F1 (macro)" value={lastF1?.toFixed(4) ?? '—'} tone="accent" />
+          <Stat label="Balanced accuracy" value={last.accuracy != null ? `${(last.accuracy * 100).toFixed(1)}%` : '—'} />
+          <Stat label="AUC-ROC" value={last.auc_roc?.toFixed(4) ?? '—'} />
+          <Stat label="Max privacy budget ε" value={maxEpsilon.toFixed(3)} tone="accent" sub="worst case across nodes" />
+          <Stat label="Total comm. overhead" value={`${totalCommMb.toFixed(2)} MB`} sub={`${totalRounds} round${totalRounds === 1 ? '' : 's'}, Paillier-encrypted`} />
           <Stat
             label="Config"
             value={`${config?.use_dp === 'True' ? 'DP' : 'no DP'} · ${config?.use_paillier === 'True' ? `Paillier ${config?.paillier_key_bits ?? '?'}-bit` : 'no Paillier'}`}
-            accent="#10b981"
+            tone="success"
           />
         </div>
 
         {baseline && lastF1 != null && (
           <div className={withinTarget ? styles.targetOk : styles.targetMiss}>
             {withinTarget
-              ? `✓ Within the 5pp target — federated F1 (${lastF1.toFixed(4)}) vs centralised baseline (${baseF1.toFixed(4)}), gap ${gap.toFixed(4)}`
-              : `⚠ Outside the 5pp target — federated F1 (${lastF1.toFixed(4)}) vs centralised baseline (${baseF1.toFixed(4)}), gap ${gap.toFixed(4)}`}
+              ? `Within the 5pp target — federated F1 (${lastF1.toFixed(4)}) vs centralised baseline (${baseF1.toFixed(4)}), gap ${gap.toFixed(4)}`
+              : `Outside the 5pp target — federated F1 (${lastF1.toFixed(4)}) vs centralised baseline (${baseF1.toFixed(4)}), gap ${gap.toFixed(4)}`}
           </div>
         )}
 
@@ -54,11 +62,11 @@ export default function CompletionSummaryModal({ rounds, baseline, config, clien
   )
 }
 
-function Stat({ label, value, accent, sub }) {
+function Stat({ label, value, tone = 'neutral', sub }) {
   return (
-    <div className={styles.stat} style={{ borderLeftColor: accent }}>
+    <div className={`${styles.stat} ${styles[tone]}`}>
       <div className={styles.statLabel}>{label}</div>
-      <div className={styles.statValue} style={{ color: accent }}>{value}</div>
+      <div className={`${styles.statValue} mono`}>{value}</div>
       {sub && <div className={styles.statSub}>{sub}</div>}
     </div>
   )

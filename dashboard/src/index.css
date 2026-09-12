@@ -1,26 +1,94 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:           #0b0f19;
-  --card:         rgba(17, 25, 40, 0.70);
-  --border:       rgba(255,255,255,0.08);
-  --primary:      #6366f1;
-  --primary-h:    #4f46e5;
-  --success:      #10b981;
-  --warning:      #f59e0b;
-  --danger:       #ef4444;
-  --text:         #f3f4f6;
-  --muted:        #9ca3af;
-  --glow:         radial-gradient(circle at 50% 0%, rgba(99,102,241,0.15), transparent 50%);
+  /* Warm-neutral dark surface scale — no blue/purple tint */
+  --bg:            #0d0c0a;
+  --bg-raised:     #131210;
+  --card:          #171512;
+  --card-solid:    #171512;
+  --border:        rgba(240,235,225,0.08);
+  --border-strong: rgba(240,235,225,0.16);
+
+  /* Single considered accent — warm brass/gold, desaturated */
+  --accent:        #c79a53;
+  --accent-strong: #ddb46e;
+  --accent-soft:   rgba(199,154,83,0.14);
+  --accent-border: rgba(199,154,83,0.35);
+  --on-accent:     #1a1408;
+
+  /* Restrained semantic set (state only, never decoration) */
+  --success:       #5fab7e;
+  --success-soft:  rgba(95,171,126,0.14);
+  --success-border:rgba(95,171,126,0.35);
+  --danger:        #c96b5c;
+  --danger-soft:   rgba(201,107,92,0.14);
+  --danger-border: rgba(201,107,92,0.35);
+
+  /* Warm gray family — text */
+  --text:          #efe9df;
+  --muted:         #a39a8d;
+  --faint:         #756c60;
+
+  --font-ui:   'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md: 0 12px 32px -8px rgba(0,0,0,0.55);
+  --shadow-lg: 0 24px 64px -12px rgba(0,0,0,0.6);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui);
   background-color: var(--bg);
-  background-image: var(--glow);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(199,154,83,0.05), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(240,235,225,0.025), transparent 55%);
   color: var(--text);
   min-height: 100vh;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Subtle grain — breaks the flat-vector look of a pure gradient background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#root { position: relative; z-index: 1; }
 
 button { font-family: inherit; cursor: pointer; }
 input, select { font-family: inherit; }
+
+::selection { background: var(--accent-soft); color: var(--accent-strong); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

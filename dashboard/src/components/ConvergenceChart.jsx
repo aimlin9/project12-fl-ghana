@@ -7,27 +7,27 @@ const BASE_OPTS = {
   interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: {
-      labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12 },
+      labels: { color: '#a39a8d', font: { size: 11, family: 'Manrope' }, boxWidth: 12 },
     },
     title: {
       display: true,
       text: 'FL Convergence — F1, Accuracy & AUC-ROC per Round',
-      color: '#f3f4f6',
-      font: { size: 13, weight: '600' },
+      color: '#efe9df',
+      font: { size: 13, weight: '600', family: 'Manrope' },
       padding: { bottom: 16 },
     },
   },
   scales: {
     x: {
-      title: { display: true, text: 'FL Round', color: '#6b7280', font: { size: 11 } },
-      ticks: { color: '#6b7280', maxTicksLimit: 15 },
-      grid:  { color: 'rgba(255,255,255,0.04)' },
+      title: { display: true, text: 'FL Round', color: '#756c60', font: { size: 11 } },
+      ticks: { color: '#756c60', maxTicksLimit: 15 },
+      grid:  { color: 'rgba(240,235,225,0.05)' },
     },
     y: {
       min: 0, max: 1,
-      title: { display: true, text: 'Score / Loss', color: '#6b7280', font: { size: 11 } },
-      ticks: { color: '#6b7280' },
-      grid:  { color: 'rgba(255,255,255,0.06)' },
+      title: { display: true, text: 'Score / Loss', color: '#756c60', font: { size: 11 } },
+      ticks: { color: '#756c60' },
+      grid:  { color: 'rgba(240,235,225,0.07)' },
     },
   },
 }
@@ -43,17 +43,17 @@ export default function ConvergenceChart({ rounds, baseline }) {
     {
       label: 'F1-score (federated)',
       data: f1,
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99,102,241,0.08)',
+      borderColor: '#c79a53',
+      backgroundColor: 'rgba(199,154,83,0.08)',
       borderWidth: 2,
       pointRadius: 3,
       tension: 0.3,
       fill: true,
     },
     {
-      label: 'Balanced Accuracy',
+      label: 'Balanced accuracy',
       data: acc,
-      borderColor: '#10b981',
+      borderColor: '#5fab7e',
       backgroundColor: 'transparent',
       borderWidth: 2,
       pointRadius: 3,
@@ -62,7 +62,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
     {
       label: 'AUC-ROC',
       data: auc,
-      borderColor: '#a855f7',
+      borderColor: '#7291ab',
       backgroundColor: 'transparent',
       borderWidth: 1.5,
       borderDash: [4, 3],
@@ -72,7 +72,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
     {
       label: 'Loss',
       data: loss,
-      borderColor: '#ef4444',
+      borderColor: '#c96b5c',
       backgroundColor: 'transparent',
       borderWidth: 1.5,
       borderDash: [6, 3],
@@ -87,7 +87,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
     datasets.push({
       label: `Centralised baseline F1 (${bVal.toFixed(4)})`,
       data: Array(labels.length).fill(bVal),
-      borderColor: '#f97316',
+      borderColor: '#ddb46e',
       backgroundColor: 'transparent',
       borderWidth: 2,
       borderDash: [8, 5],
@@ -101,7 +101,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
       <div className={styles.empty}>
         No rounds completed yet. Start a simulation to see the convergence curve.
         {baseline?.f1_score_macro != null && (
-          <div style={{ marginTop: '0.5rem', color: '#f97316', fontSize: '0.85rem' }}>
+          <div className={styles.baselineNote}>
             Centralised baseline F1: <strong>{baseline.f1_score_macro.toFixed(4)}</strong> — federated target: ≥ {(baseline.f1_score_macro - 0.05).toFixed(4)}
           </div>
         )}
@@ -110,7 +110,7 @@ export default function ConvergenceChart({ rounds, baseline }) {
   }
 
   return (
-    <div style={{ height: '320px' }}>
+    <div className={styles.boxLarge}>
       <Line data={{ labels, datasets }} options={BASE_OPTS} />
     </div>
   )

@@ -29,6 +29,7 @@ export default function App() {
   const [actionMsg, setActionMsg]   = useState(null)
   const [baseline, setBaseline]     = useState(null)
   const [showSummary, setShowSummary] = useState(false)
+  const [starting, setStarting]     = useState(false)
   const pollRef = useRef(null)
   const wasRunningRef = useRef(false)
 
@@ -63,12 +64,17 @@ export default function App() {
   }
 
   const handleStart = async () => {
+    if (starting || running) return
+    setStarting(true)
     try {
       await startSimulation()
       setShowSummary(false)
       notify('Simulation started — polling for updates…')
+      await poll()
     } catch (e) {
       notify(e.message, true)
+    } finally {
+      setStarting(false)
     }
   }
 
@@ -100,7 +106,7 @@ export default function App() {
     }
   }
 
-  const running = telemetry?.simulation_running ?? false
+  const running = (telemetry?.simulation_running ?? false) || starting
 
   return (
     <div className={styles.app}>

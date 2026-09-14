@@ -242,6 +242,9 @@ def _port_in_use(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+_start_lock = threading.Lock()
+
+
 def run_fl_simulation():
     if _port_in_use(8088):
         print("[Simulation] ERROR: Port 8088 is already in use. Previous run may not have exited cleanly.")
@@ -399,10 +402,15 @@ def stop_simulation():
 
 @app.post("/api/start")
 def start_simulation(background_tasks: BackgroundTasks):
-    if telemetry_data["simulation_running"]:
-        raise HTTPException(status_code=400, detail="Simulation is already running")
-    if _port_in_use(8088):
-        raise HTTPException(status_code=503, detail="Port 8088 in use from a previous run — wait a few seconds then retry")
+    # Claim the run synchronously, under a lock: BackgroundTasks only run after
+    # the response is sent, so two requests arriving close together would both
+    # see simulation_running == False and both pass this check otherwise.
+    with _start_lock:
+        if telemetry_data["simulation_running"]:
+            raise HTTPException(status_code=400, detail="Simulation is already running")
+        if _port_in_use(8088):
+            raise HTTPException(status_code=503, detail="Port 8088 in use from a previous run — wait a few seconds then retry")
+        telemetry_data["simulation_running"] = True
     background_tasks.add_task(run_fl_simulation)
     return {"status": "started"}
 

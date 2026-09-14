@@ -323,11 +323,9 @@ def main():
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after = Pt(4)
     run = p.add_run("Project 12 — Group 7  |  CS Department, 2026 Batch  |  Supervisor: ")
-    run.italic = True
     run.font.size = Pt(9.5)
     run.font.color.rgb = MUTED
     run2 = p.add_run("Dr. Eric Opoku Osei")
-    run2.italic = True
     run2.bold = True
     run2.font.size = Pt(9.5)
     run2.font.color.rgb = MUTED

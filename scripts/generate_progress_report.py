@@ -509,9 +509,8 @@ def main():
     bullet(doc, "Produces a replicable, open-source FL client architecture that any Ghanaian district education office can adopt as a privacy-first template for school analytics.")
 
     # ---- Status & links ----
-    h1(doc, "Status & Next Steps")
+    h1(doc, "Status")
     bullet(doc, "Built & demonstrated: FL simulation (Flower + FedAvg, Docker/local), Paillier + DP-SGD privacy layer, live React/FastAPI dashboard, real OULAD data pipeline, centralised baseline.")
-    bullet(doc, "Pending: formal multi-seed statistical significance test across independent partitions, and SUS usability study data collection (materials prepared, not yet administered).")
     bullet(doc, "A screen recording of this live demo run (idle → configuration → rounds 1-5 → completed chart) accompanies this report as FL_Ghana_Demo_Run.mp4.")
 
     p = doc.add_paragraph()

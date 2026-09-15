@@ -198,15 +198,6 @@ cd dashboard && npm install && npm run dev
 ```
 Open **http://localhost:3000** — click **▶ Start FL Simulation** on the District View.
 
-### Step 7 — Raspberry Pi physical deployment (optional, not yet benchmarked)
-The client is designed to run on low-spec hardware (<4GB RAM), and `deploy_client.sh` will
-copy and launch it on a Pi, but this project's current submission covers the Docker/local
-simulation only — no physical-hardware latency/energy benchmarking has been performed yet.
-```bash
-scp -r . pi@192.168.1.X:/home/pi/fl_client/
-ssh pi@192.168.1.X "bash /home/pi/fl_client/deploy_client.sh"
-```
-
 ---
 
 ## Research Analysis Scripts
